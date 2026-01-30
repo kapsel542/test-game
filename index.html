@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Drift: Massive Update v2.0</title>
+    <style>
+        * { box-sizing: border-box; touch-action: none; -webkit-user-select: none; }
+        body { margin: 0; background: #010105; color: #0ff; font-family: 'Courier New', monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        canvas { border: 3px solid #f0f; background: #000; width: 95vw; height: auto; max-height: 75vh; aspect-ratio: 9/6; box-shadow: inset 0 0 20px #f0f, 0 0 40px rgba(255,0,255,0.2); cursor: none; }
+        #hud { position: absolute; top: 10px; width: 95vw; display: flex; justify-content: space-between; z-index: 5000; pointer-events: none; }
+        .stat-box { background: rgba(0,0,0,0.8); padding: 12px; border-left: 4px solid #0ff; pointer-events: none; }
+        .m-btn { background: #000; border: 2px solid #0ff; color: #0ff; padding: 10px 20px; cursor: pointer; font-family: inherit; font-weight: bold; pointer-events: auto; margin-left: 5px; }
+        .sidebar { position: absolute; right: 0; top: 0; width: 360px; height: 100%; background: #050510; border-left: 3px solid #0ff; z-index: 6000; padding: 25px; display: none; overflow-y: auto; }
+        .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px; }
+        .item { background: #111; border: 1px solid #333; padding: 12px; text-align: center; cursor: pointer; font-size: 0.65rem; }
+        .item.owned { color: #0f0; border-color: #0f0; }
+        .item.eq { background: #002200; border-color: #0f0; box-shadow: inset 0 0 10px #0f0; }
+        .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 4000; }
+        .start-btn { background: #000; border: 3px solid #0f0; color: #0f0; padding: 15px 40px; font-size: 1.5rem; cursor: pointer; font-family: inherit; margin: 5px; }
+        input { background: #111; border: 2px solid #0ff; color: #0ff; padding: 15px; text-align: center; font-size: 1.2rem; margin: 10px; outline: none; width: 280px; }
+        #console { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.7); padding: 5px; display: none; z-index: 9999; }
+        #console input { background: transparent; border: none; color: #0f0; font-family: 'Courier New', monospace; padding: 5px; width: 250px; font-size: 0.8rem; text-align: center; border-bottom: 1px solid #0f0; outline: none; }
+        #event-banner { position: absolute; top: 100px; width: 100%; text-align: center; font-size: 2.5rem; font-weight: bold; text-shadow: 0 0 15px #f0f; pointer-events: none; display: none; z-index: 7000; }
+        
+        /* Leaderboard Styling */
+        #ld-screen { display: none; position: absolute; inset: 0; background: #010105; z-index: 8000; flex-direction: column; align-items: center; padding: 40px; overflow-y: auto; }
+        .ld-table { width: 100%; max-width: 600px; border-collapse: collapse; margin-top: 20px; color: #fff; }
+        .ld-table th { color: #0ff; border-bottom: 2px solid #0ff; padding: 10px; text-align: left; }
+        .ld-table td { padding: 8px; border-bottom: 1px solid #222; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <div id="event-banner">EVENT ACTIVE</div>
+
+    <div id="hud">
+        <div class="stat-box">
+            SCORE: <span id="sc">0</span> | BEST: <span id="hi" style="color:#0f0">0</span><br>
+            <span style="color:#ff0">UP: <span id="upc">0</span></span>
+        </div>
+        <div>
+            <button class="m-btn" onclick="toggleShop()">SHOP</button>
+        </div>
+    </div>
+
+    <div id="shop" class="sidebar">
+        <h2 style="color:#0ff; margin-top:0;">PRESTIGE ARMORY</h2>
+        <div id="shopList"></div>
+        <button class="m-btn" style="width:100%; border-color:#f00; color:#f00; margin-top:20px;" onclick="toggleShop()">CLOSE</button>
+    </div>
+
+    <div id="startScreen" class="overlay">
+        <h1 id="titleText" style="color:#0ff; font-size: 4rem; margin:0;">NEON DRIFT</h1>
+        <p id="subText" style="color:#f0f; font-weight:bold;">DEADLY BOUNDARIES ACTIVE</p>
+        <input type="text" id="nickInput" placeholder="PILOT_ID">
+        <div style="display:flex; flex-wrap:wrap; justify-content:center;">
+            <button class="start-btn" onclick="startGame()">ENGAGE</button>
+            <button class="start-btn" style="border-color:#0ff; color:#0ff;" onclick="toggleLeaderboard()">RECORDS</button>
+        </div>
+    </div>
+
+    <div id="ld-screen">
+        <h1 style="color:#0ff;">GLOBAL ARCHIVE</h1>
+        <div style="display:flex; gap:20px; width:100%; max-width:800px; justify-content:center;">
+            <div>
+                <h3 style="color:#f0f;">LEGENDS (SCORE)</h3>
+                <table class="ld-table" id="scoreTable"></table>
+            </div>
+            <div>
+                <h3 style="color:#ff0;">TYCOONS (CASH)</h3>
+                <table class="ld-table" id="wealthTable"></table>
+            </div>
+        </div>
+        <button class="start-btn" style="margin-top:40px; border-color:#f00; color:#f00;" onclick="toggleLeaderboard()">EXIT</button>
+    </div>
+
+    <div id="console"><input type="text" id="consoleInput" placeholder="ROOT_ACCESS_..."></div>
+
+    <canvas id="c"></canvas>
+
+    <script>
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 900; canvas.height = 600;
+
+        // Default Save including New Category and Leaderboards
+        let save = { 
+            up: 10000, 
+            nick: "PILOT", 
+            owned: ['cyan'], 
+            eqSkin: 'cyan', 
+            eqDrone: null, 
+            eqPerks: [], 
+            eqCores: [],
+            best: 0,
+            ld_scores: [
+                {n: "CYBER_ONE", v: 50000}, {n: "DRIFT_KING", v: 40000}, {n: "VOID_0", v: 30000}, 
+                {n: "NEON_X", v: 20000}, {n: "PILOT_A", v: 10000}, {n: "PILOT_B", v: 5000},
+                {n: "PILOT_C", v: 2500}, {n: "PILOT_D", v: 1000}, {n: "PILOT_E", v: 500}, {n: "PILOT_F", v: 100}
+            ],
+            ld_wealth: [
+                {n: "GATES_2.0", v: 10000000}, {n: "UP_WHALE", v: 5000000}, {n: "COIN_GOD", v: 1000000},
+                {n: "PILOT_M", v: 500000}, {n: "PILOT_N", v: 250000}, {n: "PILOT_O", v: 100000},
+                {n: "PILOT_P", v: 50000}, {n: "PILOT_Q", v: 25000}, {n: "PILOT_R", v: 10000}, {n: "PILOT_S", v: 5000}
+            ]
+        };
+
+        try {
+            const data = localStorage.getItem('nd_v10_final');
+            if(data) {
+                let parsed = JSON.parse(data);
+                // Merge old data into new structure
+                save = {...save, ...parsed};
+            }
+        } catch(e) {}
+
+        const skins = { 
+            'cyan': '#0ff', 'fire': '#f44', 'toxic': '#0f0', 'gold': '#ff0', 'royal': '#a0f', 
+            'void': '#200540', 'neon': '#f0f', 'chrome': '#aaa', 'hacker': '#00ff44', 
+            'plasma': '#4400ff', 'glitch': 'rainbow' 
+        };
+
+        const drones = {
+            'scout': {n:'Scout', p:20000, r:150, limit: 3, cd: 7000}, 
+            'sniper': {n:'Deadshot', p:55000, r:600, limit: 3, cd: 5000},
+            'laser': {n:'Pulse-X', p:95000, r:250, limit: 12, cd: 4000},
+            'orbit': {n:'Guardian', p:150000, r:200, limit: 25, cd: 3000},
+            'burst': {n:'Big Bang', p:225000, r:450, limit: 2, cd: 2000},
+            'reaper': {n:'Soul Reaper', p:350000, r:750, limit: 8, cd: 8000},
+            'titan': {n:'Ω TITAN', p:500000, r:900, limit: 20, cd: 12000},
+            'horizon': {n:'Event Horizon', p:2500000, r:1200, limit: 50, cd: 1000},
+            'singular': {n:'Ω Singularity', p:10000000, r:2000, limit: 100, cd: 500}
+        };
+
+        const perks = { 
+            'magnet': {n:'Mag-Link', p:15000}, 'shield': {n:'Aegis', p:30000}, 
+            'ghost': {n:'Phase', p:50000}, 'frenzy': {n:'Overclock', p:80000}, 
+            'static': {n:'EMP', p:100000}, 'luck': {n:'Miner', p:120000}, 
+            'drift': {n:'Speed', p:150000}, 'chronos': {n:'Chronos', p:5000000}
+        };
+
+        // NEW CATEGORY: CYBER-CORES (Permanent Passives)
+        const cores = {
+            'yield_1': {n:'Yield Core I', p:1000000, m:2, desc:'2x Coins'},
+            'yield_2': {n:'Yield Core II', p:10000000, m:5, desc:'5x Coins'},
+            'score_1': {n:'Score Core I', p:2500000, m:2, desc:'2x Score'},
+            'siphon': {n:'Data Siphon', p:50000000, m:10, desc:'10x UP Gain'},
+            'omega': {n:'Omega Core', p:500000000, m:100, desc:'Hyper Mode'}
+        };
+
+        let active = false, score = 0, enemies = [], coins = [], lastEventScore = 0;
+        let p = { x: 450, y: 300, tx: 450, ty: 300, trail: [], hasShield: false, size: 0.6, speed: 0.15, ghostMod: 0.05, god: false };
+        let droneAngle = 0, droneShots = 0, droneOnCooldown = false;
+        let bossActive = false, bossTimer = 0, eventActive = false, timeMod = 1;
+        let currentEvent = '';
+
+        function updateUI() {
+            document.getElementById('upc').innerText = Math.floor(save.up).toLocaleString();
+            document.getElementById('sc').innerText = Math.floor(score).toLocaleString();
+            document.getElementById('hi').innerText = Math.floor(save.best).toLocaleString();
+        }
+
+        function triggerEvent() {
+            if(eventActive || bossActive) return;
+            eventActive = true;
+            const events = ['HYPER-COIN', 'GRID OVERLOAD', 'TIME DILATION', 'EMP BURST', 'AEGIS REGEN', 'NEON REIGN', 'BLACKOUT'];
+            const ev = events[Math.floor(Math.random()*events.length)];
+            currentEvent = ev;
+            const banner = document.getElementById('event-banner');
+            banner.innerText = ev; banner.style.display = 'block'; banner.style.color = '#0ff';
+            
+            if(ev === 'TIME DILATION') timeMod = 0.4;
+            if(ev === 'EMP BURST') enemies = [];
+            if(ev === 'AEGIS REGEN') p.hasShield = true;
+            if(ev === 'NEON REIGN') banner.style.color = '#ff0';
+            if(ev === 'BLACKOUT') banner.style.color = '#f0f';
+
+            setTimeout(() => { 
+                banner.style.display = 'none'; 
+                eventActive = false; 
+                timeMod = 1; 
+                currentEvent = '';
+            }, 8000);
+        }
+
+        function triggerBoss() {
+            if (bossActive) return;
+            bossActive = true;
+            bossTimer = 1200; // 20 seconds
+            const banner = document.getElementById('event-banner');
+            banner.innerText = "BOSS PHASE: TITAN BLOCKS!";
+            banner.style.display = 'block'; banner.style.color = '#f00';
+            enemies = []; 
+        }
+
+        function toggleLeaderboard() {
+            const l = document.getElementById('ld-screen');
+            l.style.display = (l.style.display === 'flex') ? 'none' : 'flex';
+            if(l.style.display === 'flex') renderLeaderboards();
+        }
+
+        function renderLeaderboards() {
+            const st = document.getElementById('scoreTable');
+            const wt = document.getElementById('wealthTable');
+            
+            let sh = `<tr><th>RANK</th><th>PILOT</th><th>SCORE</th></tr>`;
+            save.ld_scores.sort((a,b)=>b.v-a.v).slice(0,10).forEach((r, i) => {
+                sh += `<tr><td>${i+1}</td><td>${r.n}</td><td>${r.v.toLocaleString()}</td></tr>`;
+            });
+            st.innerHTML = sh;
+
+            let wh = `<tr><th>RANK</th><th>PILOT</th><th>CASH</th></tr>`;
+            save.ld_wealth.sort((a,b)=>b.v-a.v).slice(0,10).forEach((r, i) => {
+                wh += `<tr><td>${i+1}</td><td>${r.n}</td><td>${r.v.toLocaleString()}</td></tr>`;
+            });
+            wt.innerHTML = wh;
+        }
+
+        function loop() {
+            if(!active) return;
+
+            // BACKGROUND LOGIC
+            if(bossActive) {
+                ctx.fillStyle = `rgba(${30 + Math.sin(Date.now()/150)*20}, 0, 0, 0.3)`;
+            } else if (currentEvent === 'BLACKOUT') {
+                ctx.fillStyle = 'rgba(0,0,0,0.9)'; // Dark mode
+            } else {
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            }
+            ctx.fillRect(0,0,900,600);
+            
+            if(!bossActive && score > 0 && score % 25000 === 0) {
+                 triggerBoss();
+            }
+            if(!bossActive && score - lastEventScore >= 2500) { triggerEvent(); lastEventScore = score; }
+
+            p.x += (p.tx - p.x) * p.speed * timeMod;
+            p.y += (p.ty - p.y) * p.speed * timeMod;
+
+            if(!p.god && (p.x < 5 || p.x > 895 || p.y < 5 || p.y > 595)) die("BOUNDARY BREACH");
+            
+            p.trail.push({x:p.x, y:p.y}); if(p.trail.length > 20) p.trail.shift();
+            p.trail.forEach((t, i) => {
+                let color = skins[save.eqSkin] === 'rainbow' ? `hsl(${Date.now()/5 % 360}, 100%, 50%)` : skins[save.eqSkin];
+                if(p.god) color = (Date.now() % 200 < 100) ? "#fff" : color;
+                ctx.fillStyle = color; ctx.globalAlpha = i / 20; ctx.beginPath(); ctx.arc(t.x, t.y, i * p.size, 0, Math.PI*2); ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+
+            if(bossActive) {
+                bossTimer--;
+                if(bossTimer <= 0) {
+                    bossActive = false; 
+                    let bonus = 100000;
+                    save.eqCores.forEach(c => bonus *= cores[c].m); // Multiplier
+                    save.up += bonus;
+                    document.getElementById('event-banner').style.display = 'none';
+                    lastEventScore = score; updateUI(); saveData();
+                }
+            }
+
+            // DRONES
+            if(save.eqDrone) {
+                droneAngle += 0.15 * timeMod;
+                let dx = p.x + Math.cos(droneAngle) * 75, dy = p.y + Math.sin(droneAngle) * 75;
+                const dData = drones[save.eqDrone];
+                ctx.fillStyle = droneOnCooldown ? '#444' : '#fff';
+                ctx.fillRect(dx-7, dy-7, 14, 14);
+                if(!droneOnCooldown) {
+                    for(let i = enemies.length-1; i >= 0; i--) {
+                        if(Math.hypot(dx-enemies[i].x, dy-enemies[i].y) < dData.r + (enemies[i].isBoss ? 40 : 0)) {
+                            ctx.strokeStyle = skins[save.eqSkin] === 'rainbow' ? '#fff' : skins[save.eqSkin];
+                            ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(dx,dy); ctx.lineTo(enemies[i].x, enemies[i].y); ctx.stroke();
+                            enemies.splice(i,1); 
+                            
+                            let sGain = 50;
+                            save.eqCores.forEach(c => { if(c.includes('score')) sGain *= cores[c].m });
+                            score += sGain; 
+                            
+                            updateUI();
+                            if(++droneShots >= dData.limit) {
+                                droneOnCooldown = true;
+                                setTimeout(() => { droneOnCooldown = false; droneShots = 0; }, dData.cd);
+                            } break;
+                        }
+                    }
+                }
+            }
+
+            // SPAWNING
+            let spawnRate = bossActive ? 0.25 : (eventActive ? 0.35 : 0.14);
+            if(Math.random() < spawnRate) {
+                enemies.push({
+                    x: Math.random()*880+10, 
+                    y: -100, 
+                    v: (3.5+score/5000) * (bossActive ? 1.7 : 1), 
+                    isBoss: bossActive 
+                });
+            }
+
+            enemies.forEach((en, i) => {
+                en.y += en.v * timeMod;
+                let sz = en.isBoss ? 66 : 22;
+                ctx.fillStyle = en.isBoss ? '#f00' : '#f0f'; 
+                ctx.fillRect(en.x - sz/2, en.y - sz/2, sz, sz);
+                
+                if(!p.god && Math.hypot(p.x-en.x, p.y-en.y) < sz/2 + 5) {
+                    if(p.hasShield) { p.hasShield = false; enemies.splice(i,1); }
+                    else die(en.isBoss ? "CRUSHED BY TITAN" : "IMPACT DETECTED");
+                }
+                if(en.y > 700) { 
+                    enemies.splice(i,1); 
+                    score += 10; 
+                    updateUI(); 
+                }
+            });
+
+            // COINS & HYPER-INFLATION
+            let coinChance = (eventActive && currentEvent === 'NEON REIGN') ? 0.6 : (eventActive ? 0.4 : 0.05);
+            if(Math.random() < coinChance) coins.push({x: Math.random()*850+25, y: -20});
+            
+            coins.forEach((cn, i) => {
+                cn.y += 2.5 * timeMod;
+                if(save.eqPerks.includes('magnet') && Math.hypot(p.x-cn.x, p.y-cn.y) < 200) {
+                    cn.x += (p.x - cn.x) * 0.15; cn.y += (p.y - cn.y) * 0.15;
+                }
+                if(Math.hypot(p.x-cn.x, p.y-cn.y) < 30) { 
+                    // INFLATION FORMULA: base + (score scaling) * Core Multipliers
+                    let baseVal = 150 + (score * 0.2);
+                    save.eqCores.forEach(c => { baseVal *= cores[c].m });
+                    
+                    save.up += baseVal;
+                    coins.splice(i,1); 
+                    updateUI(); 
+                }
+                ctx.fillStyle = '#ff0'; ctx.beginPath(); ctx.arc(cn.x, cn.y, 7, 0, Math.PI*2); ctx.fill();
+                if(cn.y > 620) coins.splice(i,1);
+            });
+
+            requestAnimationFrame(loop);
+        }
+
+        function startGame() {
+            save.nick = document.getElementById('nickInput').value.toUpperCase() || "PILOT";
+            document.getElementById('startScreen').style.display = 'none';
+            score = 0; enemies = []; coins = []; p.trail = []; p.x = 450; p.y = 300; 
+            lastEventScore = 0; bossActive = false; eventActive = false; active = true; 
+            p.hasShield = save.eqPerks.includes('shield');
+            p.speed = save.eqPerks.includes('drift') ? 0.25 : 0.15;
+            loop();
+        }
+
+        function die(reason) {
+            active = false;
+            
+            // Leaderboard Logic
+            save.ld_scores.push({n: save.nick, v: Math.floor(score)});
+            save.ld_scores.sort((a,b)=>b.v-a.v);
+            save.ld_scores = save.ld_scores.slice(0,10);
+
+            save.ld_wealth.push({n: save.nick, v: Math.floor(save.up)});
+            save.ld_wealth.sort((a,b)=>b.v-a.v);
+            save.ld_wealth = save.ld_wealth.slice(0,10);
+
+            saveData();
+            document.getElementById('titleText').innerText = reason;
+            document.getElementById('startScreen').style.display = 'flex';
+            document.getElementById('event-banner').style.display = 'none';
+            updateUI();
+        }
+
+        function saveData() {
+            if(score > save.best) save.best = Math.floor(score);
+            localStorage.setItem('nd_v10_final', JSON.stringify(save));
+        }
+
+        function toggleShop() {
+            const s = document.getElementById('shop');
+            s.style.display = (s.style.display === 'block') ? 'none' : 'block';
+            if(s.style.display === 'block') renderShop();
+        }
+
+        function renderShop() {
+            let h = `<p style="color:#0f0">SKINS</p><div class="shop-grid">` + Object.keys(skins).map(k => {
+                const owned = save.owned.includes(k);
+                return `<div class="item ${owned?'owned':''} ${save.eqSkin === k?'eq':''}" onclick="${owned?`setSkin('${k}')`:`buy('${k}','skin',75000)`}">${k.toUpperCase()}</div>`
+            }).join('') + `</div>`;
+            
+            h += `<p style="color:#f0f">WEAPONS</p><div class="shop-grid">` + Object.keys(drones).map(k => {
+                const owned = save.owned.includes(k), eq = save.eqDrone === k;
+                return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','drone',${drones[k].p})">${drones[k].n}<br>${owned?(eq?'EQUIPPED':'SELECT'):drones[k].p.toLocaleString()}</div>`
+            }).join('') + `</div>`;
+            
+            h += `<p style="color:#ff0">PERKS</p><div class="shop-grid">` + Object.keys(perks).map(k => {
+                const owned = save.owned.includes(k), eq = save.eqPerks.includes(k);
+                return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','perk',${perks[k].p})">${perks[k].n}<br>${owned?(eq?'ACTIVE':'BUY'):perks[k].p.toLocaleString()}</div>`
+            }).join('') + `</div>`;
+
+            // RENDER NEW CATEGORY: CYBER-CORES
+            h += `<p style="color:#0ff">CYBER-CORES (PASSIVE)</p><div class="shop-grid">` + Object.keys(cores).map(k => {
+                const owned = save.owned.includes(k), eq = save.eqCores.includes(k);
+                return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','core',${cores[k].p})">${cores[k].n}<br><b>${cores[k].desc}</b><br>${owned?(eq?'ACTIVE':'ENABLE'):cores[k].p.toLocaleString()}</div>`
+            }).join('') + `</div>`;
+
+            document.getElementById('shopList').innerHTML = h;
+        }
+
+        window.setSkin = (k) => { save.eqSkin = k; saveData(); updateUI(); renderShop(); }
+        window.buy = (id, type, price) => {
+            if(!save.owned.includes(id)) { if(save.up >= price) { save.up -= price; save.owned.push(id); } else return; }
+            if(type === 'drone') { save.eqDrone = (save.eqDrone === id ? null : id); }
+            if(type === 'perk') { if(save.eqPerks.includes(id)) save.eqPerks = save.eqPerks.filter(x => x !== id); else save.eqPerks.push(id); }
+            if(type === 'core') { if(save.eqCores.includes(id)) save.eqCores = save.eqCores.filter(x => x !== id); else save.eqCores.push(id); }
+            saveData(); updateUI(); renderShop();
+        }
+
+        window.addEventListener('mousemove', e => {
+            const r = canvas.getBoundingClientRect();
+            p.tx = (e.clientX - r.left) * (900/r.width);
+            p.ty = (e.clientY - r.top) * (600/r.height);
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === '`') {
+                const con = document.getElementById('console');
+                con.style.display = (con.style.display === 'block') ? 'none' : 'block';
+                if (con.style.display === 'block') document.getElementById('consoleInput').focus();
+            }
+            if (e.key === 'Enter' && document.activeElement.id === 'consoleInput') {
+                let cmd = document.getElementById('consoleInput').value.toUpperCase();
+                if (cmd === 'RICH') { save.up += 100000000; updateUI(); }
+                if (cmd === 'GOD') { p.god = !p.god; }
+                if (cmd === 'BOSS') { triggerBoss(); }
+                document.getElementById('consoleInput').value = '';
+            }
+        });
+
+        updateUI();
+    </script>
+</body>
+</html>
