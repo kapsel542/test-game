@@ -240,7 +240,6 @@
                 ctx.fillStyle = color; 
                 ctx.globalAlpha = i / maxTrail; 
                 ctx.beginPath(); 
-                // FIXED: Reset sMult immediately if event is not Solar Flare
                 let sMult = (currentEvent === 'SOLAR FLARE') ? 2.5 : 1;
                 ctx.arc(t.x, t.y, (i * p.size) * sMult, 0, Math.PI*2); 
                 ctx.fill();
@@ -398,7 +397,13 @@
                 let cmd = document.getElementById('consoleInput').value.toUpperCase();
                 if (cmd === 'RICH') { save.up += 100000000; updateUI(); }
                 if (cmd === 'GOD') { p.god = !p.god; }
+                if (cmd === 'UNLOCK ALL') {
+                    const allItems = [...Object.keys(skins), ...Object.keys(drones), ...Object.keys(perks), ...Object.keys(cores)];
+                    save.owned = [...new Set([...save.owned, ...allItems])];
+                    if(document.getElementById('shop').style.display === 'block') renderShop();
+                }
                 document.getElementById('consoleInput').value = '';
+                saveData(); updateUI();
             }
         });
 
