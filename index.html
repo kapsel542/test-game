@@ -163,13 +163,16 @@
             currentEvent = ev;
             const banner = document.getElementById('event-banner');
             banner.innerText = ev; banner.style.display = 'block'; banner.style.color = '#ff6600';
+            
             if(ev === 'TIME DILATION') timeMod = 0.4;
             if(ev === 'EMP BURST') enemies = [];
             if(ev === 'AEGIS REGEN') p.hasShield = true;
+
             setTimeout(() => { 
                 banner.style.display = 'none'; 
                 eventActive = false; 
-                timeMod = 1; 
+                // Chronos Perk protection - check if timeMod should stay slow
+                timeMod = save.eqPerks.includes('chronos') ? 0.8 : 1; 
                 currentEvent = '';
             }, 8000);
         }
@@ -212,7 +215,6 @@
             else ctx.fillStyle = bossActive ? 'rgba(50,0,0,0.3)' : 'rgba(0,0,0,0.3)';
             ctx.fillRect(0,0,900,600);
             
-            // UPDATED: Boss now triggers every 50,000 score
             if(!bossActive && score >= lastBossScore + 50000) { 
                 triggerBoss(); 
                 lastBossScore = score; 
@@ -229,13 +231,21 @@
             p.y += (p.ty - p.y) * currentSpeed * timeMod;
 
             if(!p.god && (p.x < 5 || p.x > 895 || p.y < 5 || p.y > 595)) die("FATAL ERROR");
+            
             p.trail.push({x:p.x, y:p.y}); 
-            let maxTrail = currentEvent === 'SOLAR FLARE' ? 60 : 20;
-            if(p.trail.length > maxTrail) p.trail.shift();
+            // FIX: Ensure trail length resets correctly
+            let maxTrail = (currentEvent === 'SOLAR FLARE') ? 60 : 20;
+            while(p.trail.length > maxTrail) p.trail.shift();
 
             p.trail.forEach((t, i) => {
                 let color = skins[save.eqSkin] === 'rainbow' ? `hsl(${Date.now()/5 % 360}, 100%, 50%)` : skins[save.eqSkin];
-                ctx.fillStyle = color; ctx.globalAlpha = i / maxTrail; ctx.beginPath(); ctx.arc(t.x, t.y, i * p.size, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = color; 
+                ctx.globalAlpha = i / maxTrail; 
+                ctx.beginPath(); 
+                // FIX: Pulse size during Solar Flare, reset after
+                let sMult = (currentEvent === 'SOLAR FLARE') ? 2.5 : 1;
+                ctx.arc(t.x, t.y, (i * p.size) * sMult, 0, Math.PI*2); 
+                ctx.fill();
             });
             ctx.globalAlpha = 1;
 
@@ -321,6 +331,10 @@
             document.getElementById('startScreen').style.display = 'none';
             score = 0; enemies = []; coins = []; p.trail = []; p.x = 450; p.y = 300; 
             lastEventScore = 0; lastBossScore = 0; bossActive = false; eventActive = false; active = true; 
+            
+            // CHRONOS LOGIC
+            timeMod = save.eqPerks.includes('chronos') ? 0.8 : 1.0;
+            
             p.hasShield = save.eqPerks.includes('shield');
             p.speed = save.eqPerks.includes('drift') ? 0.25 : 0.15;
             loop();
