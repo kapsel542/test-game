@@ -60,7 +60,7 @@
         </div>
     </div>
 
-  <div id="ld-screen">
+    <div id="ld-screen">
         <h1 style="color:#ff6600; font-size: 3rem; text-shadow: 0 0 20px #ff6600;">GLOBAL ARCHIVE 2.3</h1>
         <div style="display:flex; gap:30px; width:100%; max-width:900px; justify-content:center;">
             <div style="flex:1; background: rgba(255,102,0,0.05); padding: 15px; border: 1px solid #333;">
@@ -93,13 +93,8 @@
             eqPerks: [], 
             eqCores: [], 
             best: 0,
-            ld_scores: [
-                {n: "CYBER_ONE", v: 50000}, {n: "DRIFT_KING", v: 40000}, {n: "VOID_0", v: 30000}, 
-                {n: "NEON_X", v: 20000}, {n: "PILOT_A", v: 10000}, {n: "PILOT_B", v: 5000}
-            ],
-            ld_wealth: [
-                {n: "GATES_2.0", v: 10000000}, {n: "UP_WHALE", v: 5000000}, {n: "COIN_GOD", v: 1000000}
-            ]
+            ld_scores: [],
+            ld_wealth: []
         };
 
         try {
@@ -116,7 +111,7 @@
             'plasma': '#4400ff', 'glitch': 'rainbow' 
         };
 
-      const drones = {
+        const drones = {
             'scout': {n:'Scout', p:100000, r:150, limit: 5, cd: 3000}, 
             'sniper': {n:'Deadshot', p:250000, r:600, limit: 8, cd: 2500},
             'laser': {n:'Pulse-X', p:750000, r:250, limit: 13, cd: 2000},
@@ -143,35 +138,34 @@
             'omega': {n:'Omega Core', p:10000000000, m:10, desc:'10x All (SINGLE SLOT)'}
         };
         
-        // ... tutaj kończą się Twoje const cores = { ... };
+        // --- CLOUD CONFIG ---
+        const BIN_ID = '697e4ee7ae596e708f073a0d'; 
+        const API_KEY = '$2a$10$3jabLHeZU/XWliuz9En2cu22tIWQSiQFJE5J3HQmgGF6eO09CkP52'; 
 
-// --- TUTAJ WKLEJ TEN BLOK ---
-const BIN_ID = '697e4ee7ae596e708f073a0d'; 
-const API_KEY = 'T$2a$10$3jabLHeZU/XWliuz9En2cu22tIWQSiQFJE5J3HQmgGF6eO09CkP52'; 
+        async function syncCloud() {
+            try {
+                await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'X-Master-Key': API_KEY 
+                    },
+                    body: JSON.stringify({ scores: save.ld_scores, wealth: save.ld_wealth })
+                });
+            } catch (e) { console.log("Cloud Sync Error"); }
+        }
 
-async function syncCloud() {
-    try {
-        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', X-Master-Key : API_KEY },
-            body: JSON.stringify({ scores: save.ld_scores, wealth: save.ld_wealth })
-        });
-    } catch (e) { console.log("Błąd zapisu"); }
-}
-
-async function fetchCloud() {
-    try {
-        const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-            headers: { X-Master-Key: API_KEY }
-        });
-        const data = await res.json();
-        save.ld_scores = data.record.scores || [];
-        save.ld_wealth = data.record.wealth || [];
-        renderLeaderboards();
-    } catch (e) { console.log("Błąd pobierania"); }
-}
-// --- KONIEC BLOKU ---
-
+        async function fetchCloud() {
+            try {
+                const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': API_KEY }
+                });
+                const data = await res.json();
+                save.ld_scores = data.record.scores || [];
+                save.ld_wealth = data.record.wealth || [];
+                renderLeaderboards();
+            } catch (e) { console.log("Cloud Fetch Error"); }
+        }
 
         let active = false, score = 0, enemies = [], coins = [], lastEventScore = 0, lastBossScore = 0;
         let p = { x: 450, y: 300, tx: 450, ty: 300, trail: [], hasShield: false, size: 0.6, speed: 0.15, god: false };
@@ -219,20 +213,19 @@ async function fetchCloud() {
         function toggleLeaderboard() {
             const l = document.getElementById('ld-screen');
             l.style.display = (l.style.display === 'flex') ? 'none' : 'flex';
-            if(l.style.display === 'flex') renderLeaderboards();
+            if(l.style.display === 'flex') fetchCloud(); // POBIERZ Z NETU
         }
 
        function renderLeaderboards() {
             const st = document.getElementById('scoreTable');
             const wt = document.getElementById('wealthTable');
             
-            // Sort and take top 10
             let scoreData = [...save.ld_scores].sort((a,b)=>b.v-a.v).slice(0,10);
             let wealthData = [...save.ld_wealth].sort((a,b)=>b.v-a.v).slice(0,10);
 
             let sh = `<tr><th>RANK</th><th>PILOT</th><th>SCORE</th></tr>`;
             scoreData.forEach((r, i) => {
-                let color = i === 0 ? "#ff6600" : "#fff"; // Gold for #1
+                let color = i === 0 ? "#ff6600" : "#fff";
                 let rankName = i === 0 ? "👑" : i+1;
                 sh += `<tr style="color:${color}"><td>${rankName}</td><td>${r.n}</td><td>${r.v.toLocaleString()}</td></tr>`;
             });
@@ -240,7 +233,7 @@ async function fetchCloud() {
 
             let wh = `<tr><th>RANK</th><th>PILOT</th><th>WEALTH</th></tr>`;
             wealthData.forEach((r, i) => {
-                let color = i === 0 ? "#00ff44" : "#ccc"; // Green for #1 Tycoon
+                let color = i === 0 ? "#00ff44" : "#ccc";
                 wh += `<tr style="color:${color}"><td>${i+1}</td><td>${r.n}</td><td>$${r.v.toLocaleString()}</td></tr>`;
             });
             wt.innerHTML = wh;
@@ -374,25 +367,20 @@ async function fetchCloud() {
         }
 
         async function die(reason) { 
-    active = false;
-    
-    // Zapisywanie wyników do pamięci lokalnej
-    save.ld_scores.push({n: save.nick, v: Math.floor(score)});
-    save.ld_wealth.push({n: save.nick, v: Math.floor(save.up)});
-    save.best = Math.max(save.best, Math.floor(score));
-    
-    saveData(); 
-    
-    // --- TO JEST NAJWAŻNIEJSZE ---
-    // Wysyła Twoje dane do bazy w internecie
-    await syncCloud(); 
-    
-    // Wyświetlanie ekranu końca gry
-    document.getElementById('titleText').innerText = "WASTED";
-    document.getElementById('subText').innerText = reason;
-    document.getElementById('startScreen').style.display = 'flex';
-    updateUI();
-}
+            active = false;
+            
+            save.ld_scores.push({n: save.nick, v: Math.floor(score)});
+            save.ld_wealth.push({n: save.nick, v: Math.floor(save.up)});
+            save.best = Math.max(save.best, Math.floor(score));
+            
+            saveData(); 
+            await syncCloud(); 
+            
+            document.getElementById('titleText').innerText = "WASTED";
+            document.getElementById('subText').innerText = reason;
+            document.getElementById('startScreen').style.display = 'flex';
+            updateUI();
+        }
 
         function saveData() { localStorage.setItem('nd_v10_final', JSON.stringify(save)); }
 
