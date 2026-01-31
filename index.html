@@ -171,7 +171,6 @@
             setTimeout(() => { 
                 banner.style.display = 'none'; 
                 eventActive = false; 
-                // Chronos Perk protection - check if timeMod should stay slow
                 timeMod = save.eqPerks.includes('chronos') ? 0.8 : 1; 
                 currentEvent = '';
             }, 8000);
@@ -233,7 +232,6 @@
             if(!p.god && (p.x < 5 || p.x > 895 || p.y < 5 || p.y > 595)) die("FATAL ERROR");
             
             p.trail.push({x:p.x, y:p.y}); 
-            // FIX: Ensure trail length resets correctly
             let maxTrail = (currentEvent === 'SOLAR FLARE') ? 60 : 20;
             while(p.trail.length > maxTrail) p.trail.shift();
 
@@ -242,7 +240,7 @@
                 ctx.fillStyle = color; 
                 ctx.globalAlpha = i / maxTrail; 
                 ctx.beginPath(); 
-                // FIX: Pulse size during Solar Flare, reset after
+                // FIXED: Reset sMult immediately if event is not Solar Flare
                 let sMult = (currentEvent === 'SOLAR FLARE') ? 2.5 : 1;
                 ctx.arc(t.x, t.y, (i * p.size) * sMult, 0, Math.PI*2); 
                 ctx.fill();
@@ -331,10 +329,7 @@
             document.getElementById('startScreen').style.display = 'none';
             score = 0; enemies = []; coins = []; p.trail = []; p.x = 450; p.y = 300; 
             lastEventScore = 0; lastBossScore = 0; bossActive = false; eventActive = false; active = true; 
-            
-            // CHRONOS LOGIC
             timeMod = save.eqPerks.includes('chronos') ? 0.8 : 1.0;
-            
             p.hasShield = save.eqPerks.includes('shield');
             p.speed = save.eqPerks.includes('drift') ? 0.25 : 0.15;
             loop();
