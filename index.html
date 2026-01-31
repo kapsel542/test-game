@@ -7,31 +7,23 @@
     <style>
         * { box-sizing: border-box; touch-action: none; -webkit-user-select: none; }
         body { margin: 0; background: #050508; color: #ff6600; font-family: 'Courier New', monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        /* Beast Mode Canvas */
         canvas { border: 5px solid #ff6600; background: #000; width: 95vw; height: auto; max-height: 75vh; aspect-ratio: 9/6; box-shadow: 0 0 30px rgba(255, 102, 0, 0.4); cursor: none; }
-        
         #hud { position: absolute; top: 10px; width: 95vw; display: flex; justify-content: space-between; z-index: 5000; pointer-events: none; }
         .stat-box { background: rgba(0,0,0,0.9); padding: 12px; border: 2px solid #ff6600; border-left: 8px solid #ff6600; pointer-events: none; }
-        
-        /* Beast Buttons */
         .m-btn { background: #ff6600; border: none; color: #000; padding: 10px 20px; cursor: pointer; font-family: inherit; font-weight: 900; pointer-events: auto; margin-left: 5px; clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%); }
         .m-btn:hover { background: #fff; }
-
         .sidebar { position: absolute; right: 0; top: 0; width: 360px; height: 100%; background: #0a0a0c; border-left: 5px solid #ff6600; z-index: 6000; padding: 25px; display: none; overflow-y: auto; }
         .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px; }
         .item { background: #1a1a1c; border: 1px solid #444; padding: 12px; text-align: center; cursor: pointer; font-size: 0.65rem; color: #ccc; }
         .item.owned { color: #ff6600; border-color: #ff6600; }
         .item.eq { background: #331500; border-color: #ff6600; box-shadow: inset 0 0 10px #ff6600; color: #fff; }
-        
         .overlay { position: absolute; inset: 0; background: rgba(5,5,8,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 4000; }
         .start-btn { background: #000; border: 4px solid #ff6600; color: #ff6600; padding: 15px 40px; font-size: 1.8rem; cursor: pointer; font-family: inherit; margin: 5px; font-weight: bold; }
         .start-btn:hover { background: #ff6600; color: #000; }
-
         input { background: #111; border: 2px solid #ff6600; color: #ff6600; padding: 15px; text-align: center; font-size: 1.2rem; margin: 10px; outline: none; width: 280px; }
         #console { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.9); padding: 5px; display: none; z-index: 9999; border: 1px solid #ff6600; }
         #console input { background: transparent; border: none; color: #ff6600; font-family: 'Courier New', monospace; padding: 5px; width: 250px; font-size: 0.8rem; text-align: center; border-bottom: 1px solid #ff6600; outline: none; }
         #event-banner { position: absolute; top: 100px; width: 100%; text-align: center; font-size: 3rem; font-weight: 900; text-shadow: 0 0 20px #ff0000; pointer-events: none; display: none; z-index: 7000; font-style: italic; }
-        
         #ld-screen { display: none; position: absolute; inset: 0; background: #050508; z-index: 8000; flex-direction: column; align-items: center; padding: 40px; overflow-y: auto; }
         .ld-table { width: 100%; max-width: 600px; border-collapse: collapse; margin-top: 20px; color: #fff; }
         .ld-table th { color: #ff6600; border-bottom: 3px solid #ff6600; padding: 10px; text-align: left; }
@@ -166,17 +158,14 @@
         function triggerEvent() {
             if(eventActive || bossActive) return;
             eventActive = true;
-            const events = ['HYPER-COIN', 'GRID OVERLOAD', 'TIME DILATION', 'EMP BURST', 'AEGIS REGEN', 'NEON REIGN', 'BLACKOUT'];
+            const events = ['HYPER-COIN', 'GRID OVERLOAD', 'TIME DILATION', 'EMP BURST', 'AEGIS REGEN', 'NEON REIGN', 'BLACKOUT', 'GRAVITY WELL', 'SOLAR FLARE', 'SCRAMBLE', 'PHANTOM', 'GOLD RUSH'];
             const ev = events[Math.floor(Math.random()*events.length)];
             currentEvent = ev;
             const banner = document.getElementById('event-banner');
             banner.innerText = ev; banner.style.display = 'block'; banner.style.color = '#ff6600';
-            
             if(ev === 'TIME DILATION') timeMod = 0.4;
             if(ev === 'EMP BURST') enemies = [];
             if(ev === 'AEGIS REGEN') p.hasShield = true;
-            if(ev === 'NEON REIGN') banner.style.color = '#ff0';
-
             setTimeout(() => { 
                 banner.style.display = 'none'; 
                 eventActive = false; 
@@ -218,10 +207,13 @@
 
         function loop() {
             if(!active) return;
-            ctx.fillStyle = bossActive ? 'rgba(50,0,0,0.3)' : 'rgba(0,0,0,0.3)';
+            
+            if(currentEvent === 'SOLAR FLARE') ctx.fillStyle = 'rgba(255, 100, 0, 0.4)';
+            else ctx.fillStyle = bossActive ? 'rgba(50,0,0,0.3)' : 'rgba(0,0,0,0.3)';
             ctx.fillRect(0,0,900,600);
             
-            if(!bossActive && score >= lastBossScore + 25000) { 
+            // UPDATED: Boss now triggers every 50,000 score
+            if(!bossActive && score >= lastBossScore + 50000) { 
                 triggerBoss(); 
                 lastBossScore = score; 
             }
@@ -230,15 +222,20 @@
                 lastEventScore = score; 
             }
 
-            p.x += (p.tx - p.x) * p.speed * timeMod;
-            p.y += (p.ty - p.y) * p.speed * timeMod;
+            if(currentEvent === 'GRAVITY WELL') { p.tx += (450 - p.tx) * 0.05; p.ty += (300 - p.ty) * 0.05; }
+            let currentSpeed = (currentEvent === 'SCRAMBLE') ? (Math.random() > 0.5 ? 0.4 : 0.05) : p.speed;
 
-            if(!p.god && (p.x < 5 || p.x > 895 || p.y < 5 || p.y > 595)) die("FATAL ERROR: SYSTEM HALT");
-            
-            p.trail.push({x:p.x, y:p.y}); if(p.trail.length > 20) p.trail.shift();
+            p.x += (p.tx - p.x) * currentSpeed * timeMod;
+            p.y += (p.ty - p.y) * currentSpeed * timeMod;
+
+            if(!p.god && (p.x < 5 || p.x > 895 || p.y < 5 || p.y > 595)) die("FATAL ERROR");
+            p.trail.push({x:p.x, y:p.y}); 
+            let maxTrail = currentEvent === 'SOLAR FLARE' ? 60 : 20;
+            if(p.trail.length > maxTrail) p.trail.shift();
+
             p.trail.forEach((t, i) => {
                 let color = skins[save.eqSkin] === 'rainbow' ? `hsl(${Date.now()/5 % 360}, 100%, 50%)` : skins[save.eqSkin];
-                ctx.fillStyle = color; ctx.globalAlpha = i / 20; ctx.beginPath(); ctx.arc(t.x, t.y, i * p.size, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = color; ctx.globalAlpha = i / maxTrail; ctx.beginPath(); ctx.arc(t.x, t.y, i * p.size, 0, Math.PI*2); ctx.fill();
             });
             ctx.globalAlpha = 1;
 
@@ -260,14 +257,11 @@
                 const dData = drones[save.eqDrone];
                 ctx.fillStyle = droneOnCooldown ? 'rgba(100,100,100,0.5)' : '#fff';
                 ctx.fillRect(dx-7, dy-7, 14, 14);
-
                 if(!droneOnCooldown) {
-                    let nearestIdx = -1, minDistance = dData.r;
+                    let nearestIdx = -1, minDist = dData.r;
                     for (let i = 0; i < enemies.length; i++) {
-                        let dist = Math.hypot(dx - enemies[i].x, dy - enemies[i].y);
-                        if (dist < dData.r + (enemies[i].isBoss?40:0) && dist < minDistance) {
-                            minDistance = dist; nearestIdx = i;
-                        }
+                        let d = Math.hypot(dx - enemies[i].x, dy - enemies[i].y);
+                        if (d < dData.r + (enemies[i].isBoss?40:0) && d < minDist) { minDist = d; nearestIdx = i; }
                     }
                     if (nearestIdx !== -1) {
                         ctx.strokeStyle = skins[save.eqSkin] === 'rainbow' ? '#fff' : skins[save.eqSkin];
@@ -291,8 +285,10 @@
             enemies.forEach((en, i) => {
                 en.y += en.v * timeMod;
                 let sz = en.isBoss ? 66 : 22;
+                ctx.globalAlpha = currentEvent === 'PHANTOM' ? 0.2 : 1.0;
                 ctx.fillStyle = en.isBoss ? '#ff0000' : '#ff6600'; 
                 ctx.fillRect(en.x - sz/2, en.y - sz/2, sz, sz);
+                ctx.globalAlpha = 1.0;
                 if(!p.god && Math.hypot(p.x-en.x, p.y-en.y) < sz/2 + 5) {
                     if(p.hasShield) { p.hasShield = false; enemies.splice(i,1); }
                     else die("DESTRUCTION DETECTED");
@@ -300,7 +296,8 @@
                 if(en.y > 700) { enemies.splice(i,1); score += 10; updateUI(); }
             });
 
-            if(Math.random() < 0.05) coins.push({x: Math.random()*850+25, y: -20});
+            let coinChance = currentEvent === 'GOLD RUSH' ? 0.25 : 0.05;
+            if(Math.random() < coinChance) coins.push({x: Math.random()*850+25, y: -20});
             coins.forEach((cn, i) => {
                 cn.y += 2.5 * timeMod;
                 if(save.eqPerks.includes('magnet') && Math.hypot(p.x-cn.x, p.y-cn.y) < 200) {
@@ -352,22 +349,18 @@
                 const owned = save.owned.includes(k);
                 return `<div class="item ${owned?'owned':''} ${save.eqSkin === k?'eq':''}" onclick="${owned?`setSkin('${k}')`:`buy('${k}','skin',750000)`}">${k.toUpperCase()}</div>`
             }).join('') + `</div>`;
-            
             h += `<p style="color:#ff6600">BEAST WEAPONS</p><div class="shop-grid">` + Object.keys(drones).map(k => {
                 const owned = save.owned.includes(k), eq = save.eqDrone === k;
                 return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','drone',${drones[k].p})">${drones[k].n}<br>${owned?(eq?'EQUIPPED':'SELECT'):drones[k].p.toLocaleString()}</div>`
             }).join('') + `</div>`;
-            
             h += `<p style="color:#ff6600">BEAST PERKS</p><div class="shop-grid">` + Object.keys(perks).map(k => {
                 const owned = save.owned.includes(k), eq = save.eqPerks.includes(k);
                 return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','perk',${perks[k].p})">${perks[k].n}<br>${owned?(eq?'ACTIVE':'BUY'):perks[k].p.toLocaleString()}</div>`
             }).join('') + `</div>`;
-
             h += `<p style="color:#ff6600">CYBER-CORES</p><div class="shop-grid">` + Object.keys(cores).map(k => {
                 const owned = save.owned.includes(k), eq = save.eqCores.includes(k);
                 return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','core',${cores[k].p})">${cores[k].n}<br><b>${cores[k].desc}</b><br>${owned?(eq?'ACTIVE':'ENABLE'):cores[k].p.toLocaleString()}</div>`
             }).join('') + `</div>`;
-
             document.getElementById('shopList').innerHTML = h;
         }
 
@@ -376,10 +369,7 @@
             if(!save.owned.includes(id)) { if(save.up >= price) { save.up -= price; save.owned.push(id); } else return; }
             if(type === 'drone') { save.eqDrone = (save.eqDrone === id ? null : id); }
             if(type === 'perk') { if(save.eqPerks.includes(id)) save.eqPerks = save.eqPerks.filter(x => x !== id); else save.eqPerks.push(id); }
-            if(type === 'core') { 
-                if(save.eqCores.includes(id)) save.eqCores = []; 
-                else save.eqCores = [id]; 
-            }
+            if(type === 'core') { if(save.eqCores.includes(id)) save.eqCores = []; else save.eqCores = [id]; }
             saveData(); updateUI(); renderShop();
         }
 
