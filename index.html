@@ -142,6 +142,36 @@
             'siphon': {n:'Data Siphon', p:1000000000, m:5, desc:'5x UP Gain'},
             'omega': {n:'Omega Core', p:10000000000, m:10, desc:'10x All (SINGLE SLOT)'}
         };
+        
+        // ... tutaj kończą się Twoje const cores = { ... };
+
+// --- TUTAJ WKLEJ TEN BLOK ---
+const BIN_ID = '697e4ee7ae596e708f073a0d'; 
+const API_KEY = 'T$2a$10$3jabLHeZU/XWliuz9En2cu22tIWQSiQFJE5J3HQmgGF6eO09CkP52'; 
+
+async function syncCloud() {
+    try {
+        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', X-Master-Key : API_KEY },
+            body: JSON.stringify({ scores: save.ld_scores, wealth: save.ld_wealth })
+        });
+    } catch (e) { console.log("Błąd zapisu"); }
+}
+
+async function fetchCloud() {
+    try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+            headers: { X-Master-Key: API_KEY }
+        });
+        const data = await res.json();
+        save.ld_scores = data.record.scores || [];
+        save.ld_wealth = data.record.wealth || [];
+        renderLeaderboards();
+    } catch (e) { console.log("Błąd pobierania"); }
+}
+// --- KONIEC BLOKU ---
+
 
         let active = false, score = 0, enemies = [], coins = [], lastEventScore = 0, lastBossScore = 0;
         let p = { x: 450, y: 300, tx: 450, ty: 300, trail: [], hasShield: false, size: 0.6, speed: 0.15, god: false };
@@ -343,27 +373,26 @@
             loop();
         }
 
-        function die(reason) {
-            active = false;
-            
-            // 1. Record the current Score for the Legends leaderboard
-            save.ld_scores.push({n: save.nick, v: Math.floor(score)});
-            
-            // 2. Record current Wealth for the Tycoons leaderboard
-            save.ld_wealth.push({n: save.nick, v: Math.floor(save.up)});
-            
-            // 3. Update personal Best Score
-            save.best = Math.max(save.best, Math.floor(score));
-            
-            // 4. Save everything to local storage
-            saveData();
-            
-            // 5. Update UI and show the Game Over screen
-            document.getElementById('titleText').innerText = "WASTED";
-            document.getElementById('subText').innerText = reason; // Shows why you died
-            document.getElementById('startScreen').style.display = 'flex';
-            updateUI();
-        }
+        async function die(reason) { 
+    active = false;
+    
+    // Zapisywanie wyników do pamięci lokalnej
+    save.ld_scores.push({n: save.nick, v: Math.floor(score)});
+    save.ld_wealth.push({n: save.nick, v: Math.floor(save.up)});
+    save.best = Math.max(save.best, Math.floor(score));
+    
+    saveData(); 
+    
+    // --- TO JEST NAJWAŻNIEJSZE ---
+    // Wysyła Twoje dane do bazy w internecie
+    await syncCloud(); 
+    
+    // Wyświetlanie ekranu końca gry
+    document.getElementById('titleText').innerText = "WASTED";
+    document.getElementById('subText').innerText = reason;
+    document.getElementById('startScreen').style.display = 'flex';
+    updateUI();
+}
 
         function saveData() { localStorage.setItem('nd_v10_final', JSON.stringify(save)); }
 
