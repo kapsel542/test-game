@@ -345,10 +345,22 @@
 
         function die(reason) {
             active = false;
+            
+            // 1. Record the current Score for the Legends leaderboard
             save.ld_scores.push({n: save.nick, v: Math.floor(score)});
+            
+            // 2. Record current Wealth for the Tycoons leaderboard
+            save.ld_wealth.push({n: save.nick, v: Math.floor(save.up)});
+            
+            // 3. Update personal Best Score
             save.best = Math.max(save.best, Math.floor(score));
+            
+            // 4. Save everything to local storage
             saveData();
+            
+            // 5. Update UI and show the Game Over screen
             document.getElementById('titleText').innerText = "WASTED";
+            document.getElementById('subText').innerText = reason; // Shows why you died
             document.getElementById('startScreen').style.display = 'flex';
             updateUI();
         }
