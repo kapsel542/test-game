@@ -242,7 +242,7 @@
         function loop() {
             if(!active) return;
             
-            if(currentEvent === 'SOLAR FLARE') ctx.fillStyle = 'rgba(255, 100, 0, 0.4)';
+            if(currentEvent === 'SOLAR FLARE') ctx.fillStyle = 'rgba(253, 182, 90, 0.4)';
             else ctx.fillStyle = bossActive ? 'rgba(50,0,0,0.3)' : 'rgba(0,0,0,0.3)';
             ctx.fillRect(0,0,900,600);
             
@@ -272,7 +272,7 @@
                 ctx.fillStyle = color; 
                 ctx.globalAlpha = i / maxTrail; 
                 ctx.beginPath(); 
-                let sMult = (currentEvent === 'SOLAR FLARE') ? 2.5 : 1;
+                let sMult = (currentEvent === 'SOLAR FLARE') ? 2 : 1;
                 ctx.arc(t.x, t.y, (i * p.size) * sMult, 0, Math.PI*2); 
                 ctx.fill();
             });
