@@ -1,485 +1,492 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Drift: BEAST UPDATE 2.3</title>
-    <style>
-        * { box-sizing: border-box; touch-action: none; -webkit-user-select: none; }
-        body { margin: 0; background: #050508; color: #ff6600; font-family: 'Courier New', monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        canvas { border: 5px solid #ff6600; background: #000; width: 95vw; height: auto; max-height: 75vh; aspect-ratio: 9/6; box-shadow: 0 0 30px rgba(255, 102, 0, 0.4); cursor: none; }
-        #hud { position: absolute; top: 10px; width: 95vw; display: flex; justify-content: space-between; z-index: 5000; pointer-events: none; }
-        .stat-box { background: rgba(0,0,0,0.9); padding: 12px; border: 2px solid #ff6600; border-left: 8px solid #ff6600; pointer-events: none; }
-        .m-btn { background: #ff6600; border: none; color: #000; padding: 10px 20px; cursor: pointer; font-family: inherit; font-weight: 900; pointer-events: auto; margin-left: 5px; clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%); }
-        .m-btn:hover { background: #fff; }
-        .sidebar { position: absolute; right: 0; top: 0; width: 360px; height: 100%; background: #0a0a0c; border-left: 5px solid #ff6600; z-index: 6000; padding: 25px; display: none; overflow-y: auto; }
-        .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px; }
-        .item { background: #1a1a1c; border: 1px solid #444; padding: 12px; text-align: center; cursor: pointer; font-size: 0.65rem; color: #ccc; }
-        .item.owned { color: #ff6600; border-color: #ff6600; }
-        .item.eq { background: #331500; border-color: #ff6600; box-shadow: inset 0 0 10px #ff6600; color: #fff; }
-        .overlay { position: absolute; inset: 0; background: rgba(5,5,8,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 4000; }
-        .start-btn { background: #000; border: 4px solid #ff6600; color: #ff6600; padding: 15px 40px; font-size: 1.8rem; cursor: pointer; font-family: inherit; margin: 5px; font-weight: bold; }
-        .start-btn:hover { background: #ff6600; color: #000; }
-        input { background: #111; border: 2px solid #ff6600; color: #ff6600; padding: 15px; text-align: center; font-size: 1.2rem; margin: 10px; outline: none; width: 280px; }
-        #console { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.9); padding: 5px; display: none; z-index: 9999; border: 1px solid #ff6600; }
-        #console input { background: transparent; border: none; color: #ff6600; font-family: 'Courier New', monospace; padding: 5px; width: 250px; font-size: 0.8rem; text-align: center; border-bottom: 1px solid #ff6600; outline: none; }
-        #event-banner { position: absolute; top: 100px; width: 100%; text-align: center; font-size: 3rem; font-weight: 900; text-shadow: 0 0 20px #ff0000; pointer-events: none; display: none; z-index: 7000; font-style: italic; }
-        #ld-screen { display: none; position: absolute; inset: 0; background: #050508; z-index: 8000; flex-direction: column; align-items: center; padding: 40px; overflow-y: auto; }
-        .ld-table { width: 100%; max-width: 600px; border-collapse: collapse; margin-top: 20px; color: #fff; }
-        .ld-table th { color: #ff6600; border-bottom: 3px solid #ff6600; padding: 10px; text-align: left; }
-        .ld-table td { padding: 8px; border-bottom: 1px solid #222; font-size: 0.9rem; }
-    </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Neon Drift: BEAST UPDATE 2.4 (HELL'S GATE) - Balanced</title>
+<style>
+:root{--accent:#ff6600;--accent-2:#00ff44;--bg:#050508;--panel:#0a0a0c;--muted:#ccc;--danger:#ff0000}
+*{box-sizing:border-box;touch-action:none;-webkit-user-select:none}
+body{margin:0;background:var(--bg);color:var(--accent);font-family:'Courier New',monospace;overflow:hidden;display:flex;justify-content:center;align-items:center;height:100vh}
+canvas{border:5px solid var(--accent);background:#000;width:95vw;height:auto;max-height:75vh;aspect-ratio:9/6;box-shadow:0 0 30px rgba(255,102,0,0.4);cursor:none}
+#hud{position:absolute;top:10px;width:95vw;display:flex;justify-content:space-between;z-index:5000;pointer-events:none}
+.stat-box{background:rgba(0,0,0,0.9);padding:12px;border:2px solid var(--accent);border-left:8px solid var(--accent);pointer-events:none;color:var(--muted)}
+.m-btn{background:var(--accent);border:none;color:#000;padding:10px 20px;cursor:pointer;font-family:inherit;font-weight:900;pointer-events:auto;margin-left:5px;clip-path:polygon(10% 0,100% 0,90% 100%,0 100%);transition:transform 280ms cubic-bezier(.2,.9,.2,1),background 120ms}
+.m-btn:hover{transform:translateY(-3px);background:#fff}
+.sidebar{position:absolute;right:-380px;top:0;width:360px;height:100%;background:var(--panel);border-left:5px solid var(--accent);z-index:6000;padding:25px;display:block;overflow-y:auto;transition:right 700ms cubic-bezier(.22,.9,.2,1),box-shadow 700ms;box-shadow:0 0 0 rgba(0,0,0,0)}
+.sidebar.open{right:0;box-shadow:-30px 0 60px rgba(0,0,0,0.6);animation:shopPulse 700ms ease}
+@keyframes shopPulse{0%{transform:translateX(30px) scale(0.95);opacity:0}60%{transform:translateX(-6px) scale(1.02);opacity:1}100%{transform:translateX(0) scale(1)}}
+.shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:25px}
+.item{background:#1a1a1c;border:1px solid #444;padding:12px;text-align:center;cursor:pointer;font-size:0.65rem;color:var(--muted);transition:transform 160ms}
+.item:hover{transform:translateY(-4px)}
+.item.owned{color:var(--accent);border-color:var(--accent)}
+.item.eq{background:#331500;border-color:var(--accent);box-shadow:inset 0 0 10px var(--accent);color:#fff}
+.overlay{position:absolute;inset:0;background:rgba(5,5,8,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:4000}
+.start-btn{background:#000;border:4px solid var(--accent);color:var(--accent);padding:15px 40px;font-size:1.8rem;cursor:pointer;font-family:inherit;margin:5px;font-weight:bold;transition:transform 200ms}
+.start-btn:hover{background:var(--accent);color:#000;transform:translateY(-6px)}
+input{background:#111;border:2px solid var(--accent);color:var(--accent);padding:15px;text-align:center;font-size:1.2rem;margin:10px;outline:none;width:280px}
+#console{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);padding:5px;display:none;z-index:9999;border:1px solid var(--accent)}
+#console input{background:transparent;border:none;color:var(--accent);font-family:'Courier New',monospace;padding:5px;width:250px;font-size:0.8rem;text-align:center;border-bottom:1px solid var(--accent);outline:none}
+#event-banner{position:absolute;top:100px;width:100%;text-align:center;font-size:3rem;font-weight:900;text-shadow:0 0 20px var(--danger);pointer-events:none;display:none;z-index:7000;font-style:italic;color:var(--accent)}
+#ld-screen{display:none;position:absolute;inset:0;background:var(--bg);z-index:8000;flex-direction:column;align-items:center;padding:40px;overflow-y:auto}
+.ld-table{width:100%;max-width:600px;border-collapse:collapse;margin-top:20px;color:#fff}
+.ld-table th{color:var(--accent);border-bottom:3px solid var(--accent);padding:10px;text-align:left}
+.ld-table td{padding:8px;border-bottom:1px solid #222;font-size:0.9rem}
+.price{display:block;margin-top:6px;font-size:0.7rem;color:#bbb}
+.theme-row{display:flex;gap:8px;margin-bottom:15px}
+.theme-btn{width:36px;height:36px;border-radius:8px;border:2px solid #222;cursor:pointer}
+.small-note{font-size:0.75rem;color:#bbb;margin-bottom:8px}
+</style>
 </head>
 <body>
+<div id="event-banner">BEAST MODE</div>
 
-    <div id="event-banner">BEAST MODE</div>
+<div id="hud">
+  <div class="stat-box">
+    SCORE: <span id="sc">0</span> | BEST: <span id="hi" style="color:var(--accent)">0</span><br>
+    <span style="color:#fff">UP: <span id="upc">0</span></span><br>
+    <span style="color:#bbb">MULT: <span id="mult">x1</span></span>
+  </div>
+  <div>
+    <button class="m-btn" onclick="toggleShop()">BEAST SHOP</button>
+  </div>
+</div>
 
-    <div id="hud">
-        <div class="stat-box">
-            SCORE: <span id="sc">0</span> | BEST: <span id="hi" style="color:#ff6600">0</span><br>
-            <span style="color:#fff">UP: <span id="upc">0</span></span>
-        </div>
-        <div>
-            <button class="m-btn" onclick="toggleShop()">BEAST SHOP</button>
-        </div>
+<div id="shop" class="sidebar" aria-hidden="true">
+  <h2 style="color:var(--accent);margin-top:0;">BEAST ARMORY 2.4</h2>
+  <div class="small-note">THEMES:</div>
+  <div class="theme-row" id="themeRow"></div>
+  <div id="shopList"></div>
+  <button class="m-btn" style="width:100%;margin-left:0;background:#440000;color:#fff;margin-top:20px;" onclick="toggleShop()">RETURN</button>
+</div>
+
+<div id="startScreen" class="overlay">
+  <h1 id="titleText" style="color:var(--accent);font-size:5rem;margin:0;font-weight:900;">NEON DRIFT</h1>
+  <p id="subText" style="color:#fff;font-weight:bold;letter-spacing:5px;">UPDATE 2.4: HELL'S GATE (BALANCED)</p>
+  <input type="text" id="nickInput" placeholder="PILOT_ID" maxlength="15"/>
+  <div style="display:flex;flex-wrap:wrap;justify-content:center;">
+    <button class="start-btn" onclick="startGame()">ENGAGE</button>
+    <button class="start-btn" style="border-color:#fff;color:#fff;" onclick="toggleLeaderboard()">RECORDS</button>
+  </div>
+</div>
+
+<div id="ld-screen">
+  <h1 style="color:var(--accent);font-size:3rem;text-shadow:0 0 20px var(--accent);">GLOBAL ARCHIVE 2.4</h1>
+  <div style="display:flex;gap:30px;width:100%;max-width:900px;justify-content:center;">
+    <div style="flex:1;background:rgba(255,102,0,0.03);padding:15px;border:1px solid #333;">
+      <h3 style="color:var(--accent);text-align:center;">LEGENDS (SCORE)</h3>
+      <table class="ld-table" id="scoreTable"></table>
     </div>
-
-    <div id="shop" class="sidebar">
-        <h2 style="color:#ff6600; margin-top:0;">BEAST ARMORY 2.0</h2>
-        <div id="shopList"></div>
-        <button class="m-btn" style="width:100%; margin-left:0; background:#440000; color:#fff; margin-top:20px;" onclick="toggleShop()">RETURN</button>
+    <div style="flex:1;background:rgba(0,255,68,0.03);padding:15px;border:1px solid #333;">
+      <h3 style="color:var(--accent-2);text-align:center;">TYCOONS (CASH)</h3>
+      <table class="ld-table" id="wealthTable"></table>
     </div>
+  </div>
+  <div style="margin-top:12px;color:#bbb;font-size:0.9rem;">Update notes: boss = 5s, kills: 150 (z dronem) / 10 (bez broni). Multipliery zbalansowane.</div>
+  <button class="start-btn" style="margin-top:20px;border-color:var(--accent);color:var(--accent);" onclick="toggleLeaderboard()">RETURN TO COCKPIT</button>
+</div>
 
-    <div id="startScreen" class="overlay">
-        <h1 id="titleText" style="color:#ff6600; font-size: 5rem; margin:0; font-weight: 900;">NEON DRIFT</h1>
-        <p id="subText" style="color:#fff; font-weight:bold; letter-spacing: 5px;">UPDATE 2.3: THE BEAST</p>
-        <input type="text" id="nickInput" placeholder="PILOT_ID" maxlength="15">
-        <div style="display:flex; flex-wrap:wrap; justify-content:center;">
-            <button class="start-btn" onclick="startGame()">ENGAGE</button>
-            <button class="start-btn" style="border-color:#fff; color:#fff;" onclick="toggleLeaderboard()">RECORDS</button>
-        </div>
-    </div>
+<div id="console"><input type="text" id="consoleInput" placeholder="ROOT_ACCESS_..."></div>
+<canvas id="c"></canvas>
 
-    <div id="ld-screen">
-        <h1 style="color:#ff6600; font-size: 3rem; text-shadow: 0 0 20px #ff6600;">GLOBAL ARCHIVE 2.3</h1>
-        <div style="display:flex; gap:30px; width:100%; max-width:900px; justify-content:center;">
-            <div style="flex:1; background: rgba(255,102,0,0.05); padding: 15px; border: 1px solid #333;">
-                <h3 style="color:#ff6600; text-align:center;">LEGENDS (SCORE)</h3>
-                <table class="ld-table" id="scoreTable"></table>
-            </div>
-            <div style="flex:1; background: rgba(255,102,0,0.05); padding: 15px; border: 1px solid #333;">
-                <h3 style="color:#ff6600; text-align:center;">TYCOONS (CASH)</h3>
-                <table class="ld-table" id="wealthTable"></table>
-            </div>
-        </div>
-        <button class="start-btn" style="margin-top:40px; border-color:#ff6600; color:#ff6600;" onclick="toggleLeaderboard()">RETURN TO COCKPIT</button>
-    </div>
+<script>
+// ---------- CORE / SAVE ----------
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = 900; canvas.height = 600;
 
-    <div id="console"><input type="text" id="consoleInput" placeholder="ROOT_ACCESS_..."></div>
+let save = {
+  up: 5000,
+  nick: "PILOT",
+  owned: ['cyan'],
+  eqSkin: 'cyan',
+  eqDrone: null,
+  eqPerks: [],
+  eqCores: [],
+  best: 0,
+  ld_scores: [],
+  ld_wealth: []
+};
 
-    <canvas id="c"></canvas>
+try {
+  const data = localStorage.getItem('nd_v10_final');
+  if (data) save = {...save, ...JSON.parse(data)};
+} catch(e){ console.warn(e) }
 
-    <script>
-        const canvas = document.getElementById('c');
-        const ctx = canvas.getContext('2d');
-        canvas.width = 900; canvas.height = 600;
+// ---------- SKINS ----------
+const skins = {
+  'cyan': { c:'#0ff', p:750000, t:'all' },
+  'fire': { c:'#f44', p:800000, t:'all' },
+  'toxic': { c:'#0f0', p:750000, t:'all' },
+  'gold': { c:'#ff0', p:2500000, t:'all' },
+  'royal': { c:'#a0f', p:900000, t:'all' },
+  'void': { c:'#200540', p:1200000, t:'all' },
+  'neon': { c:'#f0f', p:1800000, t:'all' },
+  'chrome': { c:'#aaa', p:2200000, t:'all' },
+  'hacker': { c:'#00ff44', p:650000, t:'all' },
+  'plasma': { c:'#4400ff', p:1600000, t:'all' },
+  'glitch': { c:'rainbow', p:4500000, t:'all' },
+  'auto': { c:'#d4411e', p:950000, t:'ball' },
+  'sleekcar': { c:'#1ea6d4', p:1300000, t:'ball' },
+  'drone_mk1': { c:'#88ff88', p:650000, t:'drone' },
+  'drone_mk2': { c:'#ff88ff', p:950000, t:'drone' }
+};
 
-        let save = { 
-            up: 5000, 
-            nick: "PILOT", 
-            owned: ['cyan'], 
-            eqSkin: 'cyan', 
-            eqDrone: null, 
-            eqPerks: [], 
-            eqCores: [], 
-            best: 0,
-            ld_scores: [],
-            ld_wealth: []
-        };
+// ---------- DRONES (weapons) ----------
+const drones = {
+  'scout':    { n:'Scout',   p:100000,   r:150,  limit:5,  cd:3000, dmg:30 },
+  'sniper':   { n:'Deadshot',p:250000,   r:600,  limit:8,  cd:2500, dmg:60 },
+  'laser':    { n:'Pulse-X', p:750000,   r:250,  limit:13, cd:2000, dmg:80 },
+  'orbit':    { n:'Guardian',p:2500000,  r:200,  limit:15, cd:1750, dmg:160 },
+  'burst':    { n:'Big Bang',p:5000000,  r:450,  limit:16, cd:1500, dmg:240 },
+  'reaper':   { n:'Soul Reaper', p:15000000, r:650, limit:18, cd:1250, dmg:300 },
+  'titan':    { n:'Ω TITAN', p:50000000, r:900, limit:13, cd:1000, dmg:600 },
+  'horizon':  { n:'Event Horizon', p:250000000, r:850, limit:18, cd:1000, dmg:800 },
+  'singular': { n:'Ω Singularity', p:1000000000, r:1000, limit:30, cd:1250, dmg:1200 },
+  'midblade': { n:'Midblade', p:1200000, r:320, limit:12, cd:1500, dmg:140 },
+  'raptor':   { n:'Raptor',   p:2000000, r:420, limit:10, cd:1600, dmg:200 }
+};
 
-        try {
-            const data = localStorage.getItem('nd_v10_final');
-            if(data) {
-                let parsed = JSON.parse(data);
-                save = {...save, ...parsed};
-            }
-        } catch(e) {}
+// ---------- PERKS ----------
+const perks = {
+  'magnet': { n:'Mag-Link', p:50000 }, 'shield': { n:'Aegis', p:150000 },
+  'ghost': { n:'Phase', p:500000 }, 'frenzy': { n:'Overclock', p:1000000 },
+  'static': { n:'EMP', p:2500000 }, 'luck': { n:'Miner', p:5000000 },
+  'drift': { n:'Speed', p:10000000 }, 'chronos': { n:'Chronos', p:100000000 },
+  'vampire': { n:'Vampire', p:750000 }, 'afterburner': { n:'Afterburner', p:20000000 }
+};
 
-        const skins = { 
-            'cyan': '#0ff', 'fire': '#f44', 'toxic': '#0f0', 'gold': '#ff0', 'royal': '#a0f', 
-            'void': '#200540', 'neon': '#f0f', 'chrome': '#aaa', 'hacker': '#00ff44', 
-            'plasma': '#4400ff', 'glitch': 'rainbow' 
-        };
+// ---------- CORES (nerfed / sequence set earlier) ----------
+const cores = {
+    'yield_1': { n:'Yield Core I', p:25000000, m:1.5, desc:'1.5x Coins' },
+    'score_1': { n:'Score Core I', p:50000000, m:2, desc:'2x Score' },
+    'siphon':  { n:'Data Siphon', p:250000000, m:2.5, desc:'2.5x UP Gain' },
+    'yield_2': { n:'Yield Core II', p:500000000, m:3, desc:'3x Coins' },
+    'omega':   { n:'Omega Core', p:10000000000, m:5, desc:'5x All (SINGLE SLOT)' },
+    'apex':    { n:'Apex Core', p:25000000000, m:8, desc:'8x All (ULTIMATE)' }
+};
 
-        const drones = {
-            'scout': {n:'Scout', p:100000, r:150, limit: 5, cd: 3000}, 
-            'sniper': {n:'Deadshot', p:250000, r:600, limit: 8, cd: 2500},
-            'laser': {n:'Pulse-X', p:750000, r:250, limit: 13, cd: 2000},
-            'orbit': {n:'Guardian', p:2500000, r:200, limit: 15, cd: 1750},
-            'burst': {n:'Big Bang', p:5000000, r:450, limit: 16, cd: 1500},
-            'reaper': {n:'Soul Reaper', p:15000000, r:650, limit: 18, cd: 1500},
-            'titan': {n:'Ω TITAN', p:50000000, r:900, limit: 13, cd: 1500},
-            'horizon': {n:'Event Horizon', p:250000000, r:850, limit: 18, cd: 1500},
-            'singular': {n:'Ω Singularity', p:1000000000, r:1000, limit: 30, cd: 1250}
-        };
+const BIN_ID = '';
+const API_KEY = '';
 
-        const perks = { 
-            'magnet': {n:'Mag-Link', p:50000}, 'shield': {n:'Aegis', p:150000}, 
-            'ghost': {n:'Phase', p:500000}, 'frenzy': {n:'Overclock', p:1000000}, 
-            'static': {n:'EMP', p:2500000}, 'luck': {n:'Miner', p:5000000}, 
-            'drift': {n:'Speed', p:10000000}, 'chronos': {n:'Chronos', p:100000000}
-        };
+// ---------- CLOUD ----------
+async function syncCloud(){
+  try{
+    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+      method:'PUT',
+      headers:{ 'Content-Type':'application/json','X-Master-Key':API_KEY },
+      body: JSON.stringify({ scores: save.ld_scores, wealth: save.ld_wealth })
+    });
+  }catch(e){ console.log("Cloud Sync Error") }
+}
+async function fetchCloud(){
+  try{
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers:{ 'X-Master-Key':API_KEY }});
+    const data = await res.json();
+    save.ld_scores = data.record.scores || [];
+    save.ld_wealth = data.record.wealth || [];
+    renderLeaderboards();
+  }catch(e){ console.log("Cloud Fetch Error") }
+}
 
-        const cores = {
-            'yield_1': {n:'Yield Core I', p:25000000, m:2, desc:'2x Coins'},
-            'yield_2': {n:'Yield Core II', p:250000000, m:3, desc:'3x Coins'},
-            'score_1': {n:'Score Core I', p:50000000, m:2, desc:'2x Score'},
-            'siphon': {n:'Data Siphon', p:1000000000, m:5, desc:'5x UP Gain'},
-            'omega': {n:'Omega Core', p:10000000000, m:10, desc:'10x All (SINGLE SLOT)'}
-        };
-        
-        const BIN_ID = 'd'; 
-        const API_KEY = '$2a$F6eO09CkP52'; 
+// ---------- AUDIO ----------
+const AudioCtx = (window.AudioContext || window.webkitAudioContext) ? new (window.AudioContext || window.webkitAudioContext)() : null;
+function playBeep(freq=440,dur=0.08,type='sine',gain=0.15){ if(!AudioCtx) return; const o=AudioCtx.createOscillator(), g=AudioCtx.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=gain; o.connect(g); g.connect(AudioCtx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, AudioCtx.currentTime+dur); setTimeout(()=>{ try{ o.stop() } catch(e){} }, dur*1000+50); }
+function playPurchase(){ playBeep(880,0.06,'square',0.18); setTimeout(()=>playBeep(1320,0.05,'sine',0.12),70) }
+function playOpenShop(){ playBeep(440,0.12,'sine',0.22); setTimeout(()=>playBeep(660,0.08,'triangle',0.16),90); setTimeout(()=>playBeep(880,0.05,'sine',0.12),200) }
+function playCloseShop(){ playBeep(330,0.09,'sine',0.16); setTimeout(()=>playBeep(220,0.12,'triangle',0.12),90) }
+function playEvent(type){ if(type==='boss'){ playBeep(120,0.6,'sawtooth',0.25); setTimeout(()=>playBeep(200,0.4,'sawtooth',0.2),300) } else { playBeep(520,0.25,'square',0.2); setTimeout(()=>playBeep(660,0.18,'sine',0.15),180) } }
+function playKill(){ playBeep(1200,0.06,'square',0.22); setTimeout(()=>playBeep(900,0.08,'sine',0.14),60) }
+function playCoin(){ playBeep(1400,0.08,'triangle',0.2); setTimeout(()=>playBeep(1800,0.04,'sine',0.12),90) }
+function playDroneShot(){ playBeep(720,0.04,'sawtooth',0.12); setTimeout(()=>playBeep(840,0.03,'square',0.08),40) }
+function playCoreEquip(){ playBeep(540,0.08,'sine',0.18); setTimeout(()=>playBeep(720,0.06,'triangle',0.14),90) }
+function playBossDefeat(){ playBeep(160,0.6,'sawtooth',0.26); setTimeout(()=>playBeep(240,0.5,'sine',0.2),300); setTimeout(()=>playBeep(480,0.25,'triangle',0.16),700) }
 
-        async function syncCloud() {
-            try {
-                await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                    method: 'PUT',
-                    headers: { 
-                        'Content-Type': 'application/json', 
-                        'X-Master-Key': API_KEY 
-                    },
-                    body: JSON.stringify({ scores: save.ld_scores, wealth: save.ld_wealth })
-                });
-            } catch (e) { console.log("Cloud Sync Error"); }
+// ---------- STATE ----------
+let active=false, score=0, enemies=[], coins=[], lastEventScore=0, lastBossScore=0;
+let p={x:450,y:300,tx:450,ty:300,trail:[],hasShield:false,size:0.6,speed:0.15,god:false};
+let droneAngle=0, droneShots=0, droneOnCooldown=false;
+let bossActive=false, bossTimer=0, eventActive=false, timeMod=1;
+let currentEvent='';
+
+// ---------- THEMES ----------
+function applyTheme(theme){ document.documentElement.style.setProperty('--accent', theme.accent); if(theme.accent2) document.documentElement.style.setProperty('--accent-2', theme.accent2); if(theme.bg) document.documentElement.style.setProperty('--bg', theme.bg); }
+const themes = [{ name:'Neon Orange', accent:'#ff6600', accent2:'#00ff44', bg:'#050508' },{ name:'Acid Green', accent:'#00ff44', accent2:'#ff6600', bg:'#030403' },{ name:'Cool Blue', accent:'#1ea6d4', accent2:'#a0f', bg:'#040617' },{ name:'Hellfire', accent:'#ff2e2e', accent2:'#ffb84d', bg:'#120203' }];
+function renderThemeButtons(){ const row=document.getElementById('themeRow'); row.innerHTML = themes.map((t,i)=>`<div title="${t.name}" class="theme-btn" onclick="applyTheme(themes[${i}])" style="background:${t.accent};border-color:${t.accent2||'#222'}"></div>`).join('') }
+renderThemeButtons(); applyTheme(themes[0]);
+
+// ---------- MULTIPLIER / SCORE ----------
+function getMultiplier(){ let mult=1; if(Array.isArray(save.eqCores) && save.eqCores.length){ save.eqCores.forEach(c=>{ if(cores[c] && cores[c].m) mult *= cores[c].m; }); } if(save.eqPerks.includes('frenzy')) mult *= 1.4; return mult; }
+function addScore(amount){ const mult = getMultiplier(); const gained = Math.floor(amount * mult); score += gained; document.getElementById('mult').innerText = `x${mult.toFixed(2).replace(/\.00$/,'')}`; updateUI(); return gained; }
+
+// ---------- UI UPDATE ----------
+function updateUI(){ document.getElementById('upc').innerText = Math.floor(save.up).toLocaleString(); document.getElementById('sc').innerText = Math.floor(score).toLocaleString(); document.getElementById('hi').innerText = Math.floor(save.best).toLocaleString(); const ni = document.getElementById('nickInput'); if(save.nick && save.nick !== "PILOT"){ ni.value = save.nick; ni.readOnly = true; ni.style.opacity = "0.6" } document.getElementById('mult').innerText = `x${getMultiplier().toFixed(2).replace(/\.00$/,'')}`; }
+
+// ---------- EVENTS ----------
+function triggerEvent(){
+  // block events if boss active or already an event running
+  if(eventActive || bossActive) return;
+  eventActive = true;
+  const events = ['HYPER-COIN','GRID OVERLOAD','TIME DILATION','EMP BURST','AEGIS REGEN','NEON REIGN','BLACKOUT','GRAVITY WELL','SOLAR FLARE','SCRAMBLE','PHANTOM','GOLD RUSH','NIGHTMARE RUSH',"HELL'S GATE"];
+  const ev = events[Math.floor(Math.random()*events.length)];
+  currentEvent = ev;
+  const banner = document.getElementById('event-banner');
+  banner.innerText = ev; banner.style.display = 'block';
+  banner.style.color = (ev==="HELL'S GATE")? '#ff2e2e' : 'var(--accent)';
+  playEvent(ev==="HELL'S GATE" ? 'boss' : 'normal');
+
+  if(ev === 'TIME DILATION') timeMod = 0.4;
+  if(ev === 'EMP BURST') enemies = [];
+  if(ev === 'AEGIS REGEN') p.hasShield = true;
+  if(ev === 'GRAVITY WELL') { /* handled in loop */ }
+  if(ev === 'NIGHTMARE RUSH') { timeMod = 1.6; /* enemies spawn faster + low alpha */ }
+  if(ev === "HELL'S GATE"){
+    // start boss — make sure eventActive remains true while boss is running
+    bossActive = true;
+    bossTimer = 300; // 5 seconds at ~60fps
+    // spawn initial heavy wave
+    enemies = [];
+    for(let i=0;i<12;i++) enemies.push({ x: Math.random()*860+20, y: -100 - i*50, v: 5 + i*0.3, isBoss: (i%4===0) });
+  }
+
+  // auto-hide banner & clear non-boss eventActive after 9s; if bossActive remains, eventActive stays true until boss ends
+  setTimeout(()=>{ 
+    if(!bossActive){ banner.style.display='none'; eventActive=false; }
+    if(currentEvent==='NIGHTMARE RUSH' || currentEvent==='TIME DILATION') timeMod = save.eqPerks.includes('chronos') ? 0.8 : 1; 
+    currentEvent=''; 
+  }, 9000);
+}
+
+function triggerBoss(){
+  if(bossActive) return;
+  bossActive = true;
+  eventActive = true; // ensure no other event triggers
+  bossTimer = 300; // 5 seconds
+  const banner = document.getElementById('event-banner');
+  banner.innerText = "BOSS PHASE: THE BEAST!";
+  banner.style.display = 'block'; banner.style.color = 'var(--danger)';
+  playEvent('boss');
+  enemies = [];
+}
+
+// ---------- LEADERBOARDS ----------
+function toggleLeaderboard(){ const l=document.getElementById('ld-screen'); l.style.display = (l.style.display==='flex') ? 'none' : 'flex'; if(l.style.display==='flex') fetchCloud(); }
+function renderLeaderboards(){ const st=document.getElementById('scoreTable'), wt=document.getElementById('wealthTable'); let scoreData=[...save.ld_scores].sort((a,b)=>b.v-a.v).slice(0,10); let wealthData=[...save.ld_wealth].sort((a,b)=>b.v-a.v).slice(0,10); let sh=`<tr><th>RANK</th><th>PILOT</th><th>SCORE</th></tr>`; scoreData.forEach((r,i)=>{ let color=i===0?"var(--accent)":"#fff"; let rankName=i===0?"👑":i+1; sh+=`<tr style="color:${color}"><td>${rankName}</td><td>${r.n}</td><td>${r.v.toLocaleString()}</td></tr>` }); st.innerHTML=sh; let wh=`<tr><th>RANK</th><th>PILOT</th><th>WEALTH</th></tr>`; wealthData.forEach((r,i)=>{ let color=i===0?"var(--accent-2)":"#ccc"; wh+=`<tr style="color:${color}"><td>${i+1}</td><td>${r.n}</td><td>$${r.v.toLocaleString()}</td></tr>` }); wt.innerHTML=wh; }
+
+// ---------- MAIN LOOP ----------
+function loop(){
+  if(!active) return;
+  ctx.fillStyle = currentEvent==='SOLAR FLARE' ? 'rgba(253,182,90,0.4)' : (bossActive ? 'rgba(50,0,0,0.3)' : 'rgba(0,0,0,0.3)');
+  ctx.fillRect(0,0,900,600);
+
+  // trigger boss/event only if not already bossActive
+  if(!bossActive && score >= lastBossScore + 100000){ triggerBoss(); lastBossScore = score; }
+  if(!bossActive && score >= lastEventScore + 5000){ triggerEvent(); lastEventScore = score; }
+
+  if(currentEvent === 'GRAVITY WELL'){ p.tx += (450 - p.tx) * 0.05; p.ty += (300 - p.ty) * 0.05; }
+  let currentSpeed = (currentEvent === 'SCRAMBLE') ? (Math.random()>0.5 ? 0.4 : 0.05) : p.speed;
+  currentSpeed *= (save.eqPerks.includes('afterburner') ? 1.6 : 1);
+  p.x += (p.tx - p.x) * currentSpeed * timeMod;
+  p.y += (p.ty - p.y) * currentSpeed * timeMod;
+
+  if(!p.god && (p.x < 5 || p.x > 895 || p.y < 5 || p.y > 595)) die("FATAL ERROR");
+
+  p.trail.push({x:p.x,y:p.y});
+  let maxTrail = (currentEvent === 'SOLAR FLARE') ? 60 : 20;
+  while(p.trail.length > maxTrail) p.trail.shift();
+
+  p.trail.forEach((t,i)=>{
+    let color = (skins[save.eqSkin] && skins[save.eqSkin].c === 'rainbow') ? `hsl(${Date.now()/5 % 360},100%,50%)` : (skins[save.eqSkin] ? skins[save.eqSkin].c : '#0ff');
+    ctx.fillStyle = color; ctx.globalAlpha = i/maxTrail; ctx.beginPath();
+    let sMult = (currentEvent === 'SOLAR FLARE') ? 2 : 1;
+    if(skins[save.eqSkin] && skins[save.eqSkin].t === 'ball'){
+      let w = 12 + i * p.size * 0.25;
+      ctx.save(); ctx.translate(t.x,t.y); ctx.rotate(Math.sin(Date.now()/200)*0.04); ctx.fillRect(-w, -6*(i/maxTrail+1), w*2, 12*(i/maxTrail+1)); ctx.restore();
+    } else ctx.arc(t.x,t.y,(i * p.size) * sMult,0,Math.PI*2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // boss timer handling
+  if(bossActive){
+    bossTimer--;
+    if(bossTimer <= 0){
+      bossActive = false;
+      eventActive = false; // allow events again
+      let bonus = 100000;
+      if(Array.isArray(save.eqCores) && save.eqCores.length) save.eqCores.forEach(c => { if(cores[c] && cores[c].m) bonus *= cores[c].m });
+      if(save.eqCores.includes('apex')) bonus = Math.floor(bonus * 1.6);
+      save.up += bonus;
+      document.getElementById('event-banner').style.display = 'none';
+      lastEventScore = score; updateUI(); saveData();
+      playBossDefeat();
+    }
+  }
+
+  // drone behavior & kills
+  if(save.eqDrone){
+    droneAngle += 0.15 * timeMod;
+    let dx = p.x + Math.cos(droneAngle) * 75, dy = p.y + Math.sin(droneAngle) * 75;
+    const dData = drones[save.eqDrone];
+    ctx.fillStyle = droneOnCooldown ? 'rgba(100,100,100,0.5)' : (skins[save.eqSkin] && skins[save.eqSkin].t === 'drone' ? skins[save.eqSkin].c : '#fff');
+    if(skins[save.eqSkin] && skins[save.eqSkin].t === 'drone'){
+      ctx.beginPath(); ctx.ellipse(dx,dy,12,8,0,0,Math.PI*2); ctx.fill(); ctx.fillRect(dx-6,dy+6,12,4);
+    } else ctx.fillRect(dx-7,dy-7,14,14);
+
+    if(!droneOnCooldown){
+      let nearestIdx=-1, minDist=dData.r;
+      for(let i=0;i<enemies.length;i++){
+        let d = Math.hypot(dx-enemies[i].x, dy-enemies[i].y);
+        if(d < dData.r + (enemies[i].isBoss?40:0) && d < minDist){ minDist = d; nearestIdx = i }
+      }
+      if(nearestIdx !== -1){
+        ctx.strokeStyle = (skins[save.eqSkin] && skins[save.eqSkin].c !== 'rainbow') ? skins[save.eqSkin].c : '#fff';
+        ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(dx,dy); ctx.lineTo(enemies[nearestIdx].x,enemies[nearestIdx].y); ctx.stroke();
+
+        // sfx
+        playDroneShot();
+
+        // base kill: 150 if player has a drone (weapon), otherwise 10
+        const baseKill = save.eqDrone ? 150 : 10;
+        addScore(baseKill);
+
+        // vampire perk: grant percentage of base kill as UP
+        if(save.eqPerks.includes('vampire')){
+          let steal = Math.floor(baseKill * 0.12);
+          save.up += steal;
+          updateUI();
         }
 
-        async function fetchCloud() {
-            try {
-                const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-                    headers: { 'X-Master-Key': API_KEY }
-                });
-                const data = await res.json();
-                save.ld_scores = data.record.scores || [];
-                save.ld_wealth = data.record.wealth || [];
-                renderLeaderboards();
-            } catch (e) { console.log("Cloud Fetch Error"); }
-        }
+        // kill sfx
+        playKill();
 
-        let active = false, score = 0, enemies = [], coins = [], lastEventScore = 0, lastBossScore = 0;
-        let p = { x: 450, y: 300, tx: 450, ty: 300, trail: [], hasShield: false, size: 0.6, speed: 0.15, god: false };
-        let droneAngle = 0, droneShots = 0, droneOnCooldown = false;
-        let bossActive = false, bossTimer = 0, eventActive = false, timeMod = 1;
-        let currentEvent = '';
+        enemies.splice(nearestIdx,1);
+        if(++droneShots >= dData.limit){ droneOnCooldown = true; setTimeout(()=>{ droneOnCooldown = false; droneShots = 0; }, dData.cd) }
+      }
+    }
+  }
 
-        function updateUI() {
-            document.getElementById('upc').innerText = Math.floor(save.up).toLocaleString();
-            document.getElementById('sc').innerText = Math.floor(score).toLocaleString();
-            document.getElementById('hi').innerText = Math.floor(save.best).toLocaleString();
-            
-            // Blokowanie zmiany nicku, jeśli już jest ustawiony
-            const ni = document.getElementById('nickInput');
-            if(save.nick && save.nick !== "PILOT") {
-                ni.value = save.nick;
-                ni.readOnly = true;
-                ni.style.opacity = "0.6";
-            }
-        }
+  // enemy spawn - still spawns during boss (game design choice), events are blocked while bossActive due to eventActive flag
+  if(Math.random() < (bossActive ? 0.25 : 0.14) * (currentEvent === 'NIGHTMARE RUSH' ? 1.8 : 1)){
+    enemies.push({ x: Math.random()*880+10, y:-100, v:(3.5+score/5000) * (bossActive?1.4:1), isBoss: bossActive });
+  }
 
-        function triggerEvent() {
-            if(eventActive || bossActive) return;
-            eventActive = true;
-            const events = ['HYPER-COIN', 'GRID OVERLOAD', 'TIME DILATION', 'EMP BURST', 'AEGIS REGEN', 'NEON REIGN', 'BLACKOUT', 'GRAVITY WELL', 'SOLAR FLARE', 'SCRAMBLE', 'PHANTOM', 'GOLD RUSH'];
-            const ev = events[Math.floor(Math.random()*events.length)];
-            currentEvent = ev;
-            const banner = document.getElementById('event-banner');
-            banner.innerText = ev; banner.style.display = 'block'; banner.style.color = '#ff6600';
-            
-            if(ev === 'TIME DILATION') timeMod = 0.4;
-            if(ev === 'EMP BURST') enemies = [];
-            if(ev === 'AEGIS REGEN') p.hasShield = true;
+  // enemy movement & collisions
+  enemies.forEach((en,i)=>{
+    en.y += en.v * timeMod;
+    let sz = en.isBoss ? 66 : 22;
+    ctx.globalAlpha = currentEvent === 'PHANTOM' ? 0.2 : 1.0;
+    ctx.fillStyle = en.isBoss ? '#ff0000' : 'var(--accent)'; ctx.fillRect(en.x - sz/2, en.y - sz/2, sz, sz);
+    ctx.globalAlpha = 1.0;
+    if(!p.god && Math.hypot(p.x-en.x, p.y-en.y) < sz/2 + 5){
+      if(p.hasShield){ p.hasShield=false; enemies.splice(i,1) } else die("DESTRUCTION DETECTED");
+    }
+    if(en.y > 700){ enemies.splice(i,1); addScore(10); } // off-screen = small score (still goes through multiplier)
+  });
 
-            setTimeout(() => { 
-                banner.style.display = 'none'; 
-                eventActive = false; 
-                timeMod = save.eqPerks.includes('chronos') ? 0.8 : 1; 
-                currentEvent = '';
-            }, 8000);
-        }
+  // coins
+  let coinChance = currentEvent === 'GOLD RUSH' ? 0.25 : 0.05;
+  if(Math.random() < coinChance) coins.push({ x: Math.random()*850+25, y:-20 });
+  coins.forEach((cn,i)=>{
+    cn.y += 2.5 * timeMod;
+    if(save.eqPerks.includes('magnet') && Math.hypot(p.x-cn.x, p.y-cn.y) < 200){ cn.x += (p.x - cn.x) * 0.15; cn.y += (p.y - cn.y) * 0.15 }
+    if(Math.hypot(p.x-cn.x, p.y-cn.y) < 30){
+      let baseVal = 150 + (score * 0.2);
+      if(Array.isArray(save.eqCores) && save.eqCores.length) save.eqCores.forEach(c => { if(!c.includes('score') && cores[c] && cores[c].m) baseVal *= cores[c].m });
+      save.up += Math.floor(baseVal);
+      coins.splice(i,1); updateUI(); playCoin();
+    }
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cn.x,cn.y,7,0,Math.PI*2); ctx.fill();
+    if(cn.y > 620) coins.splice(i,1);
+  });
 
-        function triggerBoss() {
-            if (bossActive) return;
-            bossActive = true;
-            bossTimer = 1200; 
-            const banner = document.getElementById('event-banner');
-            banner.innerText = "BOSS PHASE: THE BEAST!";
-            banner.style.display = 'block'; banner.style.color = '#ff0000';
-            enemies = []; 
-        }
+  requestAnimationFrame(loop);
+}
 
-        function toggleLeaderboard() {
-            const l = document.getElementById('ld-screen');
-            l.style.display = (l.style.display === 'flex') ? 'none' : 'flex';
-            if(l.style.display === 'flex') fetchCloud(); 
-        }
+// ---------- START / DIE ----------
+function startGame(){
+  if(!save.nick || save.nick === "PILOT") save.nick = document.getElementById('nickInput').value.toUpperCase() || "PILOT";
+  saveData();
+  document.getElementById('startScreen').style.display = 'none';
+  score = 0; enemies = []; coins = []; p.trail = []; p.x=450; p.y=300;
+  lastEventScore = 0; lastBossScore = 0; bossActive = false; eventActive = false; active = true;
+  timeMod = save.eqPerks.includes('chronos') ? 0.8 : 1.0;
+  p.hasShield = save.eqPerks.includes('shield');
+  p.speed = save.eqPerks.includes('drift') ? 0.25 : 0.15;
+  if(save.eqPerks.includes('afterburner')) p.speed *= 1.25;
+  playBeep(660,0.08,'sine',0.18);
+  loop();
+}
 
-       function renderLeaderboards() {
-            const st = document.getElementById('scoreTable');
-            const wt = document.getElementById('wealthTable');
-            
-            let scoreData = [...save.ld_scores].sort((a,b)=>b.v-a.v).slice(0,10);
-            let wealthData = [...save.ld_wealth].sort((a,b)=>b.v-a.v).slice(0,10);
+async function die(reason){
+  active = false;
+  let currentScore = Math.floor(score);
+  let currentWealth = Math.floor(save.up);
+  let existingScoreIdx = save.ld_scores.findIndex(r=>r.n===save.nick);
+  if(existingScoreIdx !== -1){ if(currentScore > save.ld_scores[existingScoreIdx].v) save.ld_scores[existingScoreIdx].v = currentScore; } else save.ld_scores.push({ n: save.nick, v: currentScore });
+  let existingWealthIdx = save.ld_wealth.findIndex(r=>r.n===save.nick);
+  if(existingWealthIdx !== -1){ save.ld_wealth[existingWealthIdx].v = currentWealth; } else save.ld_wealth.push({ n: save.nick, v: currentWealth });
+  save.best = Math.max(save.best, currentScore);
+  saveData(); await syncCloud();
+  document.getElementById('titleText').innerText = "WASTED";
+  document.getElementById('subText').innerText = reason;
+  document.getElementById('startScreen').style.display = 'flex';
+  updateUI();
+  playBeep(120,0.4,'sawtooth',0.25);
+}
 
-            let sh = `<tr><th>RANK</th><th>PILOT</th><th>SCORE</th></tr>`;
-            scoreData.forEach((r, i) => {
-                let color = i === 0 ? "#ff6600" : "#fff";
-                let rankName = i === 0 ? "👑" : i+1;
-                sh += `<tr style="color:${color}"><td>${rankName}</td><td>${r.n}</td><td>${r.v.toLocaleString()}</td></tr>`;
-            });
-            st.innerHTML = sh;
+// ---------- SAVE ----------
+function saveData(){ localStorage.setItem('nd_v10_final', JSON.stringify(save)); }
 
-            let wh = `<tr><th>RANK</th><th>PILOT</th><th>WEALTH</th></tr>`;
-            wealthData.forEach((r, i) => {
-                let color = i === 0 ? "#00ff44" : "#ccc";
-                wh += `<tr style="color:${color}"><td>${i+1}</td><td>${r.n}</td><td>$${r.v.toLocaleString()}</td></tr>`;
-            });
-            wt.innerHTML = wh;
-        }
+// ---------- SHOP RENDER ----------
+function renderShop(){
+  let h = `<p style="color:var(--accent)">CORE SKINS</p><div class="shop-grid">` + Object.keys(skins).map(k=>{ const owned = save.owned.includes(k); const eq = save.eqSkin === k; const price = skins[k].p ? skins[k].p.toLocaleString()+' UP' : 'FREE'; return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="${owned?`setSkin('${k}')`:`buy('${k}','skin',${skins[k].p})`}">${k.toUpperCase()}<span class="price">${price}</span></div>` }).join('') + `</div>`;
 
-        function loop() {
-            if(!active) return;
-            
-            if(currentEvent === 'SOLAR FLARE') ctx.fillStyle = 'rgba(253, 182, 90, 0.4)';
-            else ctx.fillStyle = bossActive ? 'rgba(50,0,0,0.3)' : 'rgba(0,0,0,0.3)';
-            ctx.fillRect(0,0,900,600);
-            
-            if(!bossActive && score >= lastBossScore + 50000) { 
-                triggerBoss(); 
-                lastBossScore = score; 
-            }
-            if(!bossActive && score >= lastEventScore + 2500) { 
-                triggerEvent(); 
-                lastEventScore = score; 
-            }
+  let keys = Object.keys(drones);
+  const mids = ['midblade','raptor'];
+  keys = keys.filter(k=>!mids.includes(k));
+  const midIndex = Math.floor(keys.length/2);
+  keys.splice(midIndex,0,...mids);
 
-            if(currentEvent === 'GRAVITY WELL') { p.tx += (450 - p.tx) * 0.05; p.ty += (300 - p.ty) * 0.05; }
-            let currentSpeed = (currentEvent === 'SCRAMBLE') ? (Math.random() > 0.5 ? 0.4 : 0.05) : p.speed;
+  h += `<p style="color:var(--accent)">BEAST WEAPONS</p><div class="shop-grid">` + keys.map(k=>{ const owned = save.owned.includes(k), eq = save.eqDrone === k; const priceText = drones[k].p.toLocaleString(); return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','drone',${drones[k].p})">${drones[k].n}<br><span class="price">${owned?(eq?'EQUIPPED':'OWNED'):`${priceText} UP`}</span></div>` }).join('') + `</div>`;
 
-            p.x += (p.tx - p.x) * currentSpeed * timeMod;
-            p.y += (p.ty - p.y) * currentSpeed * timeMod;
+  h += `<p style="color:var(--accent)">BEAST PERKS</p><div class="shop-grid">` + Object.keys(perks).map(k=>{ const owned = save.owned.includes(k), eq = save.eqPerks.includes(k); return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','perk',${perks[k].p})">${perks[k].n}<br><span class="price">${owned?(eq?'ACTIVE':'OWNED'):`${perks[k].p.toLocaleString()} UP`}</span></div>` }).join('') + `</div>`;
 
-            if(!p.god && (p.x < 5 || p.x > 895 || p.y < 5 || p.y > 595)) die("FATAL ERROR");
-            
-            p.trail.push({x:p.x, y:p.y}); 
-            let maxTrail = (currentEvent === 'SOLAR FLARE') ? 60 : 20;
-            while(p.trail.length > maxTrail) p.trail.shift();
+  h += `<p style="color:var(--accent)">CYBER-CORES</p><div class="shop-grid">` + Object.keys(cores).map(k=>{ const owned = save.owned.includes(k), eq = save.eqCores.includes(k); return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','core',${cores[k].p})">${cores[k].n}<br><b>${cores[k].desc}</b><br><span class="price">${owned?(eq?'ACTIVE':'OWNED'):`${cores[k].p.toLocaleString()} UP`}</span></div>` }).join('') + `</div>`;
 
-            p.trail.forEach((t, i) => {
-                let color = skins[save.eqSkin] === 'rainbow' ? `hsl(${Date.now()/5 % 360}, 100%, 50%)` : skins[save.eqSkin];
-                ctx.fillStyle = color; 
-                ctx.globalAlpha = i / maxTrail; 
-                ctx.beginPath(); 
-                let sMult = (currentEvent === 'SOLAR FLARE') ? 2 : 1;
-                ctx.arc(t.x, t.y, (i * p.size) * sMult, 0, Math.PI*2); 
-                ctx.fill();
-            });
-            ctx.globalAlpha = 1;
+  document.getElementById('shopList').innerHTML = h;
+}
 
-            if(bossActive) {
-                bossTimer--;
-                if(bossTimer <= 0) {
-                    bossActive = false; 
-                    let bonus = 100000;
-                    save.eqCores.forEach(c => bonus *= cores[c].m);
-                    save.up += bonus;
-                    document.getElementById('event-banner').style.display = 'none';
-                    lastEventScore = score; updateUI(); saveData();
-                }
-            }
+window.setSkin = (k) => { save.eqSkin = k; saveData(); updateUI(); renderShop(); }
+window.buy = (id,type,price) => {
+  let justBought = false;
+  if(!save.owned.includes(id)){
+    if(save.up >= price){ save.up -= price; save.owned.push(id); playPurchase(); justBought = true; } else { playBeep(220,0.08,'sine',0.08); return }
+  }
+  if(type === 'drone') save.eqDrone = (save.eqDrone === id ? null : id);
+  if(type === 'perk') {
+    if(save.eqPerks.includes(id)) save.eqPerks = save.eqPerks.filter(x=>x!==id);
+    else save.eqPerks.push(id);
+  }
+  if(type === 'core') {
+    if(save.eqCores.includes(id)) save.eqCores = [];
+    else { save.eqCores = [id]; playCoreEquip(); }
+  }
+  saveData(); updateUI(); renderShop();
+}
 
-            if(save.eqDrone) {
-                droneAngle += 0.15 * timeMod;
-                let dx = p.x + Math.cos(droneAngle) * 75, dy = p.y + Math.sin(droneAngle) * 75;
-                const dData = drones[save.eqDrone];
-                ctx.fillStyle = droneOnCooldown ? 'rgba(100,100,100,0.5)' : '#fff';
-                ctx.fillRect(dx-7, dy-7, 14, 14);
-                if(!droneOnCooldown) {
-                    let nearestIdx = -1, minDist = dData.r;
-                    for (let i = 0; i < enemies.length; i++) {
-                        let d = Math.hypot(dx - enemies[i].x, dy - enemies[i].y);
-                        if (d < dData.r + (enemies[i].isBoss?40:0) && d < minDist) { minDist = d; nearestIdx = i; }
-                    }
-                    if (nearestIdx !== -1) {
-                        ctx.strokeStyle = skins[save.eqSkin] === 'rainbow' ? '#fff' : skins[save.eqSkin];
-                        ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(dx,dy); ctx.lineTo(enemies[nearestIdx].x, enemies[nearestIdx].y); ctx.stroke();
-                        enemies.splice(nearestIdx, 1);
-                        let sGain = 50;
-                        save.eqCores.forEach(c => { if(c.includes('score') || c === 'omega') sGain *= cores[c].m });
-                        score += sGain; updateUI();
-                        if(++droneShots >= dData.limit) {
-                            droneOnCooldown = true;
-                            setTimeout(() => { droneOnCooldown = false; droneShots = 0; }, dData.cd);
-                        }
-                    }
-                }
-            }
+function toggleShop(){
+  const s=document.getElementById('shop');
+  if(s.classList.contains('open')){ s.classList.remove('open'); s.setAttribute('aria-hidden','true'); playCloseShop(); }
+  else { s.classList.add('open'); s.setAttribute('aria-hidden','false'); renderShop(); playOpenShop(); }
+}
 
-            if(Math.random() < (bossActive ? 0.25 : 0.14)) {
-                enemies.push({ x: Math.random()*880+10, y: -100, v: (3.5+score/5000) * (bossActive ? 1.7 : 1), isBoss: bossActive });
-            }
+window.addEventListener('mousemove', e=>{ const r=canvas.getBoundingClientRect(); p.tx = (e.clientX - r.left) * (900/r.width); p.ty = (e.clientY - r.top) * (600/r.height); });
+window.addEventListener('keydown', e=>{ if(e.key==='`'){ const con=document.getElementById('console'); con.style.display=(con.style.display==='block')?'none':'block'; if(con.style.display==='block') document.getElementById('consoleInput').focus(); } if(e.key==='Enter' && document.activeElement.id==='consoleInput'){ let cmd=document.getElementById('consoleInput').value.toUpperCase(); if(cmd==='RICH'){ save.up += 100000000; updateUI(); playPurchase() } if(cmd==='GOD'){ p.god = !p.god; playBeep(660,0.08,'sine',0.15) } if(cmd==='UNLOCK ALL'){ const allItems = [...Object.keys(skins), ...Object.keys(drones), ...Object.keys(perks), ...Object.keys(cores)]; save.owned = [...new Set([...save.owned, ...allItems])]; if(document.getElementById('shop').classList.contains('open')) renderShop(); } document.getElementById('consoleInput').value=''; saveData(); updateUI(); } });
 
-            enemies.forEach((en, i) => {
-                en.y += en.v * timeMod;
-                let sz = en.isBoss ? 66 : 22;
-                ctx.globalAlpha = currentEvent === 'PHANTOM' ? 0.2 : 1.0;
-                ctx.fillStyle = en.isBoss ? '#ff0000' : '#ff6600'; 
-                ctx.fillRect(en.x - sz/2, en.y - sz/2, sz, sz);
-                ctx.globalAlpha = 1.0;
-                if(!p.god && Math.hypot(p.x-en.x, p.y-en.y) < sz/2 + 5) {
-                    if(p.hasShield) { p.hasShield = false; enemies.splice(i,1); }
-                    else die("DESTRUCTION DETECTED");
-                }
-                if(en.y > 700) { enemies.splice(i,1); score += 10; updateUI(); }
-            });
+updateUI();
+renderShop();
 
-            let coinChance = currentEvent === 'GOLD RUSH' ? 0.25 : 0.05;
-            if(Math.random() < coinChance) coins.push({x: Math.random()*850+25, y: -20});
-            coins.forEach((cn, i) => {
-                cn.y += 2.5 * timeMod;
-                if(save.eqPerks.includes('magnet') && Math.hypot(p.x-cn.x, p.y-cn.y) < 200) {
-                    cn.x += (p.x - cn.x) * 0.15; cn.y += (p.y - cn.y) * 0.15;
-                }
-                if(Math.hypot(p.x-cn.x, p.y-cn.y) < 30) { 
-                    let baseVal = 150 + (score * 0.2);
-                    save.eqCores.forEach(c => { if(!c.includes('score')) baseVal *= cores[c].m });
-                    save.up += baseVal;
-                    coins.splice(i,1); updateUI(); 
-                }
-                ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cn.x, cn.y, 7, 0, Math.PI*2); ctx.fill();
-                if(cn.y > 620) coins.splice(i,1);
-            });
-
-            requestAnimationFrame(loop);
-        }
-
-        function startGame() {
-            // Pobieramy nick tylko jeśli nie został jeszcze ustalony na sztywno
-            if(!save.nick || save.nick === "PILOT") {
-                save.nick = document.getElementById('nickInput').value.toUpperCase() || "PILOT";
-            }
-            
-            saveData();
-            document.getElementById('startScreen').style.display = 'none';
-            score = 0; enemies = []; coins = []; p.trail = []; p.x = 450; p.y = 300; 
-            lastEventScore = 0; lastBossScore = 0; bossActive = false; eventActive = false; active = true; 
-            timeMod = save.eqPerks.includes('chronos') ? 0.8 : 1.0;
-            p.hasShield = save.eqPerks.includes('shield');
-            p.speed = save.eqPerks.includes('drift') ? 0.25 : 0.15;
-            loop();
-        }
-
-        async function die(reason) { 
-            active = false;
-            let currentScore = Math.floor(score);
-            let currentWealth = Math.floor(save.up);
-
-            // LOGIKA UNIKANIA DUPLIKATÓW W LEADERBOARDZIE
-            // 1. Score Board
-            let existingScoreIdx = save.ld_scores.findIndex(r => r.n === save.nick);
-            if (existingScoreIdx !== -1) {
-                // Jeśli gracz już jest, zaktualizuj wynik tylko jeśli jest lepszy
-                if (currentScore > save.ld_scores[existingScoreIdx].v) {
-                    save.ld_scores[existingScoreIdx].v = currentScore;
-                }
-            } else {
-                // Jeśli gracza nie ma, dodaj nowy wpis
-                save.ld_scores.push({n: save.nick, v: currentScore});
-            }
-
-            // 2. Wealth Board
-            let existingWealthIdx = save.ld_wealth.findIndex(r => r.n === save.nick);
-            if (existingWealthIdx !== -1) {
-                // Majątek aktualizujemy zawsze na aktualny stan posiadania
-                save.ld_wealth[existingWealthIdx].v = currentWealth;
-            } else {
-                save.ld_wealth.push({n: save.nick, v: currentWealth});
-            }
-
-            save.best = Math.max(save.best, currentScore);
-            
-            saveData(); 
-            await syncCloud(); 
-            
-            document.getElementById('titleText').innerText = "WASTED";
-            document.getElementById('subText').innerText = reason;
-            document.getElementById('startScreen').style.display = 'flex';
-            updateUI();
-        }
-
-        function saveData() { localStorage.setItem('nd_v10_final', JSON.stringify(save)); }
-
-        function toggleShop() {
-            const s = document.getElementById('shop');
-            s.style.display = (s.style.display === 'block') ? 'none' : 'block';
-            if(s.style.display === 'block') renderShop();
-        }
-
-        function renderShop() {
-            let h = `<p style="color:#ff6600">CORE SKINS</p><div class="shop-grid">` + Object.keys(skins).map(k => {
-                const owned = save.owned.includes(k);
-                return `<div class="item ${owned?'owned':''} ${save.eqSkin === k?'eq':''}" onclick="${owned?`setSkin('${k}')`:`buy('${k}','skin',750000)`}">${k.toUpperCase()}</div>`
-            }).join('') + `</div>`;
-            h += `<p style="color:#ff6600">BEAST WEAPONS</p><div class="shop-grid">` + Object.keys(drones).map(k => {
-                const owned = save.owned.includes(k), eq = save.eqDrone === k;
-                return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','drone',${drones[k].p})">${drones[k].n}<br>${owned?(eq?'EQUIPPED':'SELECT'):drones[k].p.toLocaleString()}</div>`
-            }).join('') + `</div>`;
-            h += `<p style="color:#ff6600">BEAST PERKS</p><div class="shop-grid">` + Object.keys(perks).map(k => {
-                const owned = save.owned.includes(k), eq = save.eqPerks.includes(k);
-                return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','perk',${perks[k].p})">${perks[k].n}<br>${owned?(eq?'ACTIVE':'BUY'):perks[k].p.toLocaleString()}</div>`
-            }).join('') + `</div>`;
-            h += `<p style="color:#ff6600">CYBER-CORES</p><div class="shop-grid">` + Object.keys(cores).map(k => {
-                const owned = save.owned.includes(k), eq = save.eqCores.includes(k);
-                return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','core',${cores[k].p})">${cores[k].n}<br><b>${cores[k].desc}</b><br>${owned?(eq?'ACTIVE':'ENABLE'):cores[k].p.toLocaleString()}</div>`
-            }).join('') + `</div>`;
-            document.getElementById('shopList').innerHTML = h;
-        }
-
-        window.setSkin = (k) => { save.eqSkin = k; saveData(); updateUI(); renderShop(); }
-        window.buy = (id, type, price) => {
-            if(!save.owned.includes(id)) { if(save.up >= price) { save.up -= price; save.owned.push(id); } else return; }
-            if(type === 'drone') { save.eqDrone = (save.eqDrone === id ? null : id); }
-            if(type === 'perk') { if(save.eqPerks.includes(id)) save.eqPerks = save.eqPerks.filter(x => x !== id); else save.eqPerks.push(id); }
-            if(type === 'core') { if(save.eqCores.includes(id)) save.eqCores = []; else save.eqCores = [id]; }
-            saveData(); updateUI(); renderShop();
-        }
-
-        window.addEventListener('mousemove', e => {
-            const r = canvas.getBoundingClientRect();
-            p.tx = (e.clientX - r.left) * (900/r.width);
-            p.ty = (e.clientY - r.top) * (600/r.height);
-        });
-
-        window.addEventListener('keydown', (e) => {
-            if (e.key === '`') {
-                const con = document.getElementById('console');
-                con.style.display = (con.style.display === 'block') ? 'none' : 'block';
-                if (con.style.display === 'block') document.getElementById('consoleInput').focus();
-            }
-            if (e.key === 'Enter' && document.activeElement.id === 'consoleInput') {
-                let cmd = document.getElementById('consoleInput').value.toUpperCase();
-                if (cmd === 'RICH') { save.up += 100000000; updateUI(); }
-                if (cmd === 'GOD') { p.god = !p.god; }
-                if (cmd === 'UNLOCK ALL') {
-                    const allItems = [...Object.keys(skins), ...Object.keys(drones), ...Object.keys(perks), ...Object.keys(cores)];
-                    save.owned = [...new Set([...save.owned, ...allItems])];
-                    if(document.getElementById('shop').style.display === 'block') renderShop();
-                }
-                document.getElementById('consoleInput').value = '';
-                saveData(); updateUI();
-            }
-        });
-
-        updateUI();
-    </script>
+</script>
 </body>
 </html>
