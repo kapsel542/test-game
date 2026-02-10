@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>Neon Drift: BEAST UPDATE 2.4 (HELL'S GATE) - Balanced</title>
+<title>Neon Drift: Chaos mode 2.5(Chaos mode) - Reborn</title>
 <style>
 :root{--accent:#ff6600;--accent-2:#00ff44;--bg:#050508;--panel:#0a0a0c;--muted:#ccc;--danger:#ff0000}
 *{box-sizing:border-box;touch-action:none;-webkit-user-select:none}
@@ -36,10 +36,22 @@ input{background:#111;border:2px solid var(--accent);color:var(--accent);padding
 .theme-row{display:flex;gap:8px;margin-bottom:15px}
 .theme-btn{width:36px;height:36px;border-radius:8px;border:2px solid #222;cursor:pointer}
 .small-note{font-size:0.75rem;color:#bbb;margin-bottom:8px}
+
+/* Rainbow UI support (used when body.dataset.rainbow === 'true') */
+.rainbow-accent {
+  background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rainbowShift 6s linear infinite;
+}
+@keyframes rainbowShift {
+  0%{filter: hue-rotate(0deg)} 100%{filter: hue-rotate(360deg)}
+}
 </style>
 </head>
 <body>
-<div id="event-banner">BEAST MODE</div>
+<div id="event-banner">Chaos mode</div>
 
 <div id="hud">
   <div class="stat-box">
@@ -48,12 +60,12 @@ input{background:#111;border:2px solid var(--accent);color:var(--accent);padding
     <span style="color:#bbb">MULT: <span id="mult">x1</span></span>
   </div>
   <div>
-    <button class="m-btn" onclick="toggleShop()">BEAST SHOP</button>
+    <button class="m-btn" onclick="toggleShop()">Neon SHOP</button>
   </div>
 </div>
 
 <div id="shop" class="sidebar" aria-hidden="true">
-  <h2 style="color:var(--accent);margin-top:0;">BEAST ARMORY 2.4</h2>
+  <h2 style="color:var(--accent);margin-top:0;">Neon ARMORY 2.4</h2>
   <div class="small-note">THEMES:</div>
   <div class="theme-row" id="themeRow"></div>
   <div id="shopList"></div>
@@ -82,7 +94,7 @@ input{background:#111;border:2px solid var(--accent);color:var(--accent);padding
       <table class="ld-table" id="wealthTable"></table>
     </div>
   </div>
-  <div style="margin-top:12px;color:#bbb;font-size:0.9rem;">Update notes: boss = 5s, kills: 150 (z dronem) / 10 (bez broni). Multipliery zbalansowane.</div>
+  <div style="margin-top:12px;color:#bbb;font-size:0.9rem;">Update notes: boss = 5s, kills: 150 (z dronem) / 10 (bez broni). Multipliery zbalansowane. Nowe bronie, perki i eventy!</div>
   <button class="start-btn" style="margin-top:20px;border-color:var(--accent);color:var(--accent);" onclick="toggleLeaderboard()">RETURN TO COCKPIT</button>
 </div>
 
@@ -129,7 +141,12 @@ const skins = {
   'auto': { c:'#d4411e', p:950000, t:'ball' },
   'sleekcar': { c:'#1ea6d4', p:1300000, t:'ball' },
   'drone_mk1': { c:'#88ff88', p:650000, t:'drone' },
-  'drone_mk2': { c:'#ff88ff', p:950000, t:'drone' }
+  'drone_mk2': { c:'#ff88ff', p:950000, t:'drone' },
+  /* NEW SKINS */
+  'opal': { c:'#bfffcf', p:1100000, t:'ball' },
+  'ruby': { c:'#ff3366', p:1400000, t:'ball' },
+  'emerald': { c:'#00cc88', p:1400000, t:'ball' },
+  'rainbow_skin': { c:'rainbow', p:6500000, t:'ball' }
 };
 
 // ---------- DRONES (weapons) ----------
@@ -140,11 +157,14 @@ const drones = {
   'orbit':    { n:'Guardian',p:2500000,  r:200,  limit:15, cd:1750, dmg:160 },
   'burst':    { n:'Big Bang',p:5000000,  r:450,  limit:16, cd:1500, dmg:240 },
   'reaper':   { n:'Soul Reaper', p:15000000, r:650, limit:18, cd:1250, dmg:300 },
-  'titan':    { n:'Ω TITAN', p:50000000, r:900, limit:13, cd:1000, dmg:600 },
-  'horizon':  { n:'Event Horizon', p:250000000, r:850, limit:18, cd:1000, dmg:800 },
+  'titan':    { n:'Ω TITAN', p:50000000, r:900, limit:19, cd:1000, dmg:600 },
+  'horizon':  { n:'Event Horizon', p:250000000, r:850, limit:20, cd:1000, dmg:800 },
   'singular': { n:'Ω Singularity', p:1000000000, r:1000, limit:30, cd:1250, dmg:1200 },
   'midblade': { n:'Midblade', p:1200000, r:320, limit:12, cd:1500, dmg:140 },
-  'raptor':   { n:'Raptor',   p:2000000, r:420, limit:10, cd:1600, dmg:200 }
+  'raptor':   { n:'Raptor',   p:2000000, r:420, limit:10, cd:1600, dmg:200 },
+  /* NEW WEAPONS */
+  'tempest':  { n:'Tempest Mk-II', p:2000000000, r:1200, limit:35, cd:900, dmg:2000 },
+  'voltaic':  { n:'Voltaic Lance', p:2300000000, r:1200, limit:37, cd:850, dmg:2500 }
 };
 
 // ---------- PERKS ----------
@@ -153,7 +173,11 @@ const perks = {
   'ghost': { n:'Phase', p:500000 }, 'frenzy': { n:'Overclock', p:1000000 },
   'static': { n:'EMP', p:2500000 }, 'luck': { n:'Miner', p:5000000 },
   'drift': { n:'Speed', p:10000000 }, 'chronos': { n:'Chronos', p:100000000 },
-  'vampire': { n:'Vampire', p:750000 }, 'afterburner': { n:'Afterburner', p:20000000 }
+  'vampire': { n:'Vampire', p:750000 }, 'afterburner': { n:'Afterburner', p:20000000 },
+  /* NEW PERKS */
+  'recycler': { n:'Recycler', p:1200000 }, /* increases coin value */
+  'flare': { n:'Solar Flare', p:3000000 }, /* amplifies solar events */
+  'phase_shift': { n:'Phase Shift', p:6000000 } /* chance to avoid death */
 };
 
 // ---------- CORES (nerfed / sequence set earlier) ----------
@@ -161,7 +185,7 @@ const cores = {
     'yield_1': { n:'Yield Core I', p:25000000, m:1.5, desc:'1.5x Coins' },
     'score_1': { n:'Score Core I', p:50000000, m:2, desc:'2x Score' },
     'siphon':  { n:'Data Siphon', p:250000000, m:2.5, desc:'2.5x UP Gain' },
-    'yield_2': { n:'Yield Core II', p:500000000, m:3, desc:'3x Coins' },
+    'yield_2': { n:'Yield Core II', p:500000500, m:3, desc:'3x Coins' },
     'omega':   { n:'Omega Core', p:10000000000, m:5, desc:'5x All (SINGLE SLOT)' },
     'apex':    { n:'Apex Core', p:25000000000, m:8, desc:'8x All (ULTIMATE)' }
 };
@@ -189,7 +213,7 @@ async function fetchCloud(){
   }catch(e){ console.log("Cloud Fetch Error") }
 }
 
-// ---------- AUDIO ----------
+// ---------- AUDIO (more sfx added) ----------
 const AudioCtx = (window.AudioContext || window.webkitAudioContext) ? new (window.AudioContext || window.webkitAudioContext)() : null;
 function playBeep(freq=440,dur=0.08,type='sine',gain=0.15){ if(!AudioCtx) return; const o=AudioCtx.createOscillator(), g=AudioCtx.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=gain; o.connect(g); g.connect(AudioCtx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, AudioCtx.currentTime+dur); setTimeout(()=>{ try{ o.stop() } catch(e){} }, dur*1000+50); }
 function playPurchase(){ playBeep(880,0.06,'square',0.18); setTimeout(()=>playBeep(1320,0.05,'sine',0.12),70) }
@@ -201,6 +225,10 @@ function playCoin(){ playBeep(1400,0.08,'triangle',0.2); setTimeout(()=>playBeep
 function playDroneShot(){ playBeep(720,0.04,'sawtooth',0.12); setTimeout(()=>playBeep(840,0.03,'square',0.08),40) }
 function playCoreEquip(){ playBeep(540,0.08,'sine',0.18); setTimeout(()=>playBeep(720,0.06,'triangle',0.14),90) }
 function playBossDefeat(){ playBeep(160,0.6,'sawtooth',0.26); setTimeout(()=>playBeep(240,0.5,'sine',0.2),300); setTimeout(()=>playBeep(480,0.25,'triangle',0.16),700) }
+/* NEW SFX */
+function playPerkEquip(){ playBeep(980,0.06,'triangle',0.18); setTimeout(()=>playBeep(1260,0.04,'sine',0.12),80) }
+function playNova(){ playBeep(320,0.5,'sawtooth',0.28); setTimeout(()=>playBeep(520,0.25,'sine',0.18),250) }
+function playRainbowRave(){ playBeep(1000,0.04,'square',0.18); setTimeout(()=>playBeep(1200,0.03,'square',0.16),50); setTimeout(()=>playBeep(1400,0.02,'sine',0.12),100) }
 
 // ---------- STATE ----------
 let active=false, score=0, enemies=[], coins=[], lastEventScore=0, lastBossScore=0;
@@ -208,11 +236,31 @@ let p={x:450,y:300,tx:450,ty:300,trail:[],hasShield:false,size:0.6,speed:0.15,go
 let droneAngle=0, droneShots=0, droneOnCooldown=false;
 let bossActive=false, bossTimer=0, eventActive=false, timeMod=1;
 let currentEvent='';
+let rainbowMode=false; // NEW: when RAINBOW RAVE runs
+let novaMode=false;    // NEW: when NOVA STORM runs
 
 // ---------- THEMES ----------
-function applyTheme(theme){ document.documentElement.style.setProperty('--accent', theme.accent); if(theme.accent2) document.documentElement.style.setProperty('--accent-2', theme.accent2); if(theme.bg) document.documentElement.style.setProperty('--bg', theme.bg); }
-const themes = [{ name:'Neon Orange', accent:'#ff6600', accent2:'#00ff44', bg:'#050508' },{ name:'Acid Green', accent:'#00ff44', accent2:'#ff6600', bg:'#030403' },{ name:'Cool Blue', accent:'#1ea6d4', accent2:'#a0f', bg:'#040617' },{ name:'Hellfire', accent:'#ff2e2e', accent2:'#ffb84d', bg:'#120203' }];
-function renderThemeButtons(){ const row=document.getElementById('themeRow'); row.innerHTML = themes.map((t,i)=>`<div title="${t.name}" class="theme-btn" onclick="applyTheme(themes[${i}])" style="background:${t.accent};border-color:${t.accent2||'#222'}"></div>`).join('') }
+function applyTheme(theme){ 
+  // if theme.accent is 'rainbow', toggle dataset flag for special rendering
+  if(theme.accent === 'rainbow'){ document.body.dataset.rainbow = 'true'; document.documentElement.style.setProperty('--accent', '#ffffff'); }
+  else { document.body.dataset.rainbow = 'false'; document.documentElement.style.setProperty('--accent', theme.accent); }
+  if(theme.accent2) document.documentElement.style.setProperty('--accent-2', theme.accent2); 
+  if(theme.bg) document.documentElement.style.setProperty('--bg', theme.bg); 
+  // optionally set panel tint
+  if(theme.panel) document.documentElement.style.setProperty('--panel', theme.panel);
+  // update CSS borders that depend on accent (quick re-render)
+  document.querySelectorAll('.stat-box, .item.eq').forEach(el=>el.style.borderLeftColor = getComputedStyle(document.documentElement).getPropertyValue('--accent'));
+}
+const themes = [
+  { name:'Neon Orange', accent:'#ff6600', accent2:'#00ff44', bg:'#050508' },
+  { name:'Acid Green', accent:'#00ff44', accent2:'#ff6600', bg:'#030403' },
+  { name:'Cool Blue', accent:'#1ea6d4', accent2:'#a0f', bg:'#040617' },
+  { name:'Hellfire', accent:'#ff2e2e', accent2:'#ffb84d', bg:'#120203' },
+  /* NEW THEME: Rainbow UI */
+  { name:'Rainbow UI', accent:'rainbow', accent2:'#ffffff', bg:'#040004' },
+  { name:'Midnight', accent:'#8a8aff', accent2:'#ff8ad1', bg:'#02010a' }
+];
+function renderThemeButtons(){ const row=document.getElementById('themeRow'); row.innerHTML = themes.map((t,i)=>`<div title="${t.name}" class="theme-btn" onclick="applyTheme(themes[${i}])" style="background:${t.accent==='rainbow'?'linear-gradient(90deg,#ff0000,#ff7f00,#ffff00,#00ff00,#0000ff,#8b00ff)':t.accent};border-color:${t.accent2||'#222'}"></div>`).join('') }
 renderThemeButtons(); applyTheme(themes[0]);
 
 // ---------- MULTIPLIER / SCORE ----------
@@ -220,20 +268,27 @@ function getMultiplier(){ let mult=1; if(Array.isArray(save.eqCores) && save.eqC
 function addScore(amount){ const mult = getMultiplier(); const gained = Math.floor(amount * mult); score += gained; document.getElementById('mult').innerText = `x${mult.toFixed(2).replace(/\.00$/,'')}`; updateUI(); return gained; }
 
 // ---------- UI UPDATE ----------
-function updateUI(){ document.getElementById('upc').innerText = Math.floor(save.up).toLocaleString(); document.getElementById('sc').innerText = Math.floor(score).toLocaleString(); document.getElementById('hi').innerText = Math.floor(save.best).toLocaleString(); const ni = document.getElementById('nickInput'); if(save.nick && save.nick !== "PILOT"){ ni.value = save.nick; ni.readOnly = true; ni.style.opacity = "0.6" } document.getElementById('mult').innerText = `x${getMultiplier().toFixed(2).replace(/\.00$/,'')}`; }
+function updateUI(){ document.getElementById('upc').innerText = Math.floor(save.up).toLocaleString(); document.getElementById('sc').innerText = Math.floor(score).toLocaleString(); document.getElementById('hi').innerText = Math.floor(save.best).toLocaleString(); const ni = document.getElementById('nickInput'); if(save.nick && save.nick !== "PILOT"){ ni.value = save.nick; ni.readOnly = true; ni.style.opacity = "0.6" } document.getElementById('mult').innerText = `x${getMultiplier().toFixed(2).replace(/\.00$/,'')}`; 
+  // rainbow accent effect on some texts
+  const title = document.getElementById('titleText');
+  if(document.body.dataset.rainbow === 'true'){ title.classList.add('rainbow-accent') } else title.classList.remove('rainbow-accent');
+}
 
 // ---------- EVENTS ----------
 function triggerEvent(){
   // block events if boss active or already an event running
   if(eventActive || bossActive) return;
   eventActive = true;
-  const events = ['HYPER-COIN','GRID OVERLOAD','TIME DILATION','EMP BURST','AEGIS REGEN','NEON REIGN','BLACKOUT','GRAVITY WELL','SOLAR FLARE','SCRAMBLE','PHANTOM','GOLD RUSH','NIGHTMARE RUSH',"HELL'S GATE"];
+  const events = ['HYPER-COIN','GRID OVERLOAD','TIME DILATION','EMP BURST','AEGIS REGEN','NEON REIGN','BLACKOUT','GRAVITY WELL','SOLAR FLARE','SCRAMBLE','PHANTOM','GOLD RUSH','NIGHTMARE RUSH',"HELL'S GATE", 'RAINBOW RAVE', 'NOVA STORM'];
   const ev = events[Math.floor(Math.random()*events.length)];
   currentEvent = ev;
   const banner = document.getElementById('event-banner');
   banner.innerText = ev; banner.style.display = 'block';
-  banner.style.color = (ev==="HELL'S GATE")? '#ff2e2e' : 'var(--accent)';
+  banner.style.color = (ev==="HELL'S GATE" || ev==='NOVA STORM')? '#ff2e2e' : 'var(--accent)';
   playEvent(ev==="HELL'S GATE" ? 'boss' : 'normal');
+
+  // reset special mode flags
+  rainbowMode = false; novaMode = false;
 
   if(ev === 'TIME DILATION') timeMod = 0.4;
   if(ev === 'EMP BURST') enemies = [];
@@ -248,11 +303,25 @@ function triggerEvent(){
     enemies = [];
     for(let i=0;i<12;i++) enemies.push({ x: Math.random()*860+20, y: -100 - i*50, v: 5 + i*0.3, isBoss: (i%4===0) });
   }
+  if(ev === 'RAINBOW RAVE'){
+    rainbowMode = true;
+    // increase coins spawn & score for a short time
+    playRainbowRave();
+  }
+  if(ev === 'NOVA STORM'){
+    novaMode = true;
+    timeMod = 1.4;
+    // spawn rapid enemies
+    for(let i=0;i<18;i++) enemies.push({ x: Math.random()*880+10, y:-100 - Math.random()*400, v:4 + Math.random()*5, isBoss:false });
+    playNova();
+  }
 
   // auto-hide banner & clear non-boss eventActive after 9s; if bossActive remains, eventActive stays true until boss ends
   setTimeout(()=>{ 
     if(!bossActive){ banner.style.display='none'; eventActive=false; }
     if(currentEvent==='NIGHTMARE RUSH' || currentEvent==='TIME DILATION') timeMod = save.eqPerks.includes('chronos') ? 0.8 : 1; 
+    // reset special flags
+    rainbowMode = false; novaMode = false;
     currentEvent=''; 
   }, 9000);
 }
@@ -296,7 +365,13 @@ function loop(){
   while(p.trail.length > maxTrail) p.trail.shift();
 
   p.trail.forEach((t,i)=>{
-    let color = (skins[save.eqSkin] && skins[save.eqSkin].c === 'rainbow') ? `hsl(${Date.now()/5 % 360},100%,50%)` : (skins[save.eqSkin] ? skins[save.eqSkin].c : '#0ff');
+    // color selection with rainbow support from skin or theme
+    let color;
+    const skinColor = skins[save.eqSkin] ? skins[save.eqSkin].c : '#0ff';
+    if(skins[save.eqSkin] && skins[save.eqSkin].c === 'rainbow') color = `hsl(${Date.now()/5 % 360},100%,50%)`;
+    else if(document.body.dataset.rainbow === 'true') color = `hsl(${(Date.now()/10 + i*6) % 360},100%,50%)`;
+    else color = skinColor;
+
     ctx.fillStyle = color; ctx.globalAlpha = i/maxTrail; ctx.beginPath();
     let sMult = (currentEvent === 'SOLAR FLARE') ? 2 : 1;
     if(skins[save.eqSkin] && skins[save.eqSkin].t === 'ball'){
@@ -367,8 +442,8 @@ function loop(){
   }
 
   // enemy spawn - still spawns during boss (game design choice), events are blocked while bossActive due to eventActive flag
-  if(Math.random() < (bossActive ? 0.25 : 0.14) * (currentEvent === 'NIGHTMARE RUSH' ? 1.8 : 1)){
-    enemies.push({ x: Math.random()*880+10, y:-100, v:(3.5+score/5000) * (bossActive?1.4:1), isBoss: bossActive });
+  if(Math.random() < (bossActive ? 0.25 : 0.14) * (currentEvent === 'NIGHTMARE RUSH' ? 1.8 : 1) * (novaMode?1.6:1)){
+    enemies.push({ x: Math.random()*880+10, y:-100, v:(3.5+score/5000) * (bossActive?1.4:1) * (novaMode?1.6:1), isBoss: bossActive });
   }
 
   // enemy movement & collisions
@@ -379,20 +454,32 @@ function loop(){
     ctx.fillStyle = en.isBoss ? '#ff0000' : 'var(--accent)'; ctx.fillRect(en.x - sz/2, en.y - sz/2, sz, sz);
     ctx.globalAlpha = 1.0;
     if(!p.god && Math.hypot(p.x-en.x, p.y-en.y) < sz/2 + 5){
-      if(p.hasShield){ p.hasShield=false; enemies.splice(i,1) } else die("DESTRUCTION DETECTED");
+      // PHASE SHIFT perk: chance to avoid death
+      if(save.eqPerks.includes('phase_shift') && Math.random() < 0.35){
+        // small effect: blink and survive
+        p.x += (Math.random()-0.5)*80; p.y += (Math.random()-0.5)*80;
+        playBeep(880,0.05,'triangle',0.14);
+        enemies.splice(i,1);
+      } else {
+        if(p.hasShield){ p.hasShield=false; enemies.splice(i,1) } else die("DESTRUCTION DETECTED");
+      }
     }
     if(en.y > 700){ enemies.splice(i,1); addScore(10); } // off-screen = small score (still goes through multiplier)
   });
 
   // coins
   let coinChance = currentEvent === 'GOLD RUSH' ? 0.25 : 0.05;
+  if(rainbowMode) coinChance *= 1.5; // increased coin spawn during rainbow rave
   if(Math.random() < coinChance) coins.push({ x: Math.random()*850+25, y:-20 });
   coins.forEach((cn,i)=>{
     cn.y += 2.5 * timeMod;
     if(save.eqPerks.includes('magnet') && Math.hypot(p.x-cn.x, p.y-cn.y) < 200){ cn.x += (p.x - cn.x) * 0.15; cn.y += (p.y - cn.y) * 0.15 }
     if(Math.hypot(p.x-cn.x, p.y-cn.y) < 30){
       let baseVal = 150 + (score * 0.2);
+      if(save.eqPerks.includes('recycler')) baseVal = Math.floor(baseVal * 1.25); // recycler perk effect
       if(Array.isArray(save.eqCores) && save.eqCores.length) save.eqCores.forEach(c => { if(!c.includes('score') && cores[c] && cores[c].m) baseVal *= cores[c].m });
+      // flare perk amplifies solar coin value during SOLAR FLARE & RAINBOW RAVE
+      if(save.eqPerks.includes('flare') && (currentEvent === 'SOLAR FLARE' || rainbowMode)) baseVal = Math.floor(baseVal * 1.5);
       save.up += Math.floor(baseVal);
       coins.splice(i,1); updateUI(); playCoin();
     }
@@ -466,7 +553,7 @@ window.buy = (id,type,price) => {
   if(type === 'drone') save.eqDrone = (save.eqDrone === id ? null : id);
   if(type === 'perk') {
     if(save.eqPerks.includes(id)) save.eqPerks = save.eqPerks.filter(x=>x!==id);
-    else save.eqPerks.push(id);
+    else { save.eqPerks.push(id); playPerkEquip(); } // new sfx for perks
   }
   if(type === 'core') {
     if(save.eqCores.includes(id)) save.eqCores = [];
