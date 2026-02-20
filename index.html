@@ -68,6 +68,13 @@ input{background:#111;border:2px solid var(--accent);color:var(--accent);padding
   <h2 style="color:var(--accent);margin-top:0;">Neon ARMORY 2.4</h2>
   <div class="small-note">THEMES:</div>
   <div class="theme-row" id="themeRow"></div>
+
+  <!-- Tab buttons: SKINS / SHAPES -->
+  <div style="display:flex;gap:10px;margin:10px 0;">
+    <button class="m-btn" onclick="switchTab('skins')" id="tab-skins" style="flex:1">SKINS</button>
+    <button class="m-btn" onclick="switchTab('shapes')" id="tab-shapes" style="flex:1">SHAPES</button>
+  </div>
+
   <div id="shopList"></div>
   <button class="m-btn" style="width:100%;margin-left:0;background:#440000;color:#fff;margin-top:20px;" onclick="toggleShop()">RETURN</button>
 </div>
@@ -117,7 +124,11 @@ let save = {
   eqCores: [],
   best: 0,
   ld_scores: [],
-  ld_wealth: []
+  ld_wealth: [],
+  // SHAPES: new save fields
+  eqShape: null,
+  shapeColor: '#ffffff',
+  ownedShapes: []
 };
 
 try {
@@ -147,6 +158,15 @@ const skins = {
   'ruby': { c:'#ff3366', p:1400000, t:'ball' },
   'emerald': { c:'#00cc88', p:1400000, t:'ball' },
   'rainbow_skin': { c:'rainbow', p:6500000, t:'ball' }
+};
+
+// ---------- SHAPES ----------
+const shapes = {
+  'triangle': { name:'Triangle Core', price:2000 },
+  'square':   { name:'Square Block',  price:3000 },
+  'diamond':  { name:'Diamond Edge',  price:5000 },
+  'star':     { name:'Star Pulse',    price:8000 },
+  'hexagon':  { name:'Hexa Shield',   price:12000 }
 };
 
 // ---------- DRONES (weapons) ----------
@@ -196,6 +216,7 @@ const API_KEY = '';
 // ---------- CLOUD ----------
 async function syncCloud(){
   try{
+    if(!BIN_ID || !API_KEY) return;
     await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
       method:'PUT',
       headers:{ 'Content-Type':'application/json','X-Master-Key':API_KEY },
@@ -205,6 +226,7 @@ async function syncCloud(){
 }
 async function fetchCloud(){
   try{
+    if(!BIN_ID || !API_KEY) return;
     const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers:{ 'X-Master-Key':API_KEY }});
     const data = await res.json();
     save.ld_scores = data.record.scores || [];
@@ -268,18 +290,140 @@ function getMultiplier(){ let mult=1; if(Array.isArray(save.eqCores) && save.eqC
 function addScore(amount){ const mult = getMultiplier(); const gained = Math.floor(amount * mult); score += gained; document.getElementById('mult').innerText = `x${mult.toFixed(2).replace(/\.00$/,'')}`; updateUI(); return gained; }
 
 // ---------- UI UPDATE ----------
-function updateUI(){ document.getElementById('upc').innerText = Math.floor(save.up).toLocaleString(); document.getElementById('sc').innerText = Math.floor(score).toLocaleString(); document.getElementById('hi').innerText = Math.floor(save.best).toLocaleString(); const ni = document.getElementById('nickInput'); if(save.nick && save.nick !== "PILOT"){ ni.value = save.nick; ni.readOnly = true; ni.style.opacity = "0.6" } document.getElementById('mult').innerText = `x${getMultiplier().toFixed(2).replace(/\.00$/,'')}`; 
+function updateUI(){
+  document.getElementById('upc').innerText = Math.floor(save.up).toLocaleString();
+  document.getElementById('sc').innerText = Math.floor(score).toLocaleString();
+  document.getElementById('hi').innerText = Math.floor(save.best).toLocaleString();
+  const ni = document.getElementById('nickInput');
+  if(save.nick && save.nick !== "PILOT"){ ni.value = save.nick; ni.readOnly = true; ni.style.opacity = "0.6" }
+  document.getElementById('mult').innerText = `x${getMultiplier().toFixed(2).replace(/\.00$/,'')}`;
   // rainbow accent effect on some texts
   const title = document.getElementById('titleText');
   if(document.body.dataset.rainbow === 'true'){ title.classList.add('rainbow-accent') } else title.classList.remove('rainbow-accent');
 }
 
-// ---------- EVENTS ----------
+// ---------- SHOP: tabs ----------
+let currentTab = 'skins';
+function switchTab(tab){
+  currentTab = tab;
+  // visual tab highlight (simple)
+  document.getElementById('tab-skins').style.filter = (tab==='skins') ? 'brightness(1.15)' : 'none';
+  document.getElementById('tab-shapes').style.filter = (tab==='shapes') ? 'brightness(1.15)' : 'none';
+  renderShop();
+}
+
+// ---------- SHOP RENDER ----------
+function renderShop(){
+  let h = '';
+
+  if(currentTab === 'skins'){
+    h += `<p style="color:var(--accent)">CORE SKINS</p><div class="shop-grid">` 
+    + Object.keys(skins).map(k=>{
+      const owned = save.owned.includes(k);
+      const eq = save.eqSkin === k;
+      const price = skins[k].p ? skins[k].p.toLocaleString()+' UP' : 'FREE';
+      return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="${owned?`setSkin('${k}')`:`buy('${k}','skin',${skins[k].p})`}">${k.toUpperCase()}<span class="price">${owned?(eq?'EQUIPPED':'OWNED'):price}</span></div>`
+    }).join('') + `</div>`;
+
+    let keys = Object.keys(drones);
+    const mids = ['midblade','raptor'];
+    keys = keys.filter(k=>!mids.includes(k));
+    const midIndex = Math.floor(keys.length/2);
+    keys.splice(midIndex,0,...mids);
+
+    h += `<p style="color:var(--accent)">BEAST WEAPONS</p><div class="shop-grid">` + keys.map(k=>{ const owned = save.owned.includes(k), eq = save.eqDrone === k; const priceText = drones[k].p.toLocaleString(); return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','drone',${drones[k].p})">${drones[k].n}<br><span class="price">${owned?(eq?'EQUIPPED':'OWNED'):`${priceText} UP`}</span></div>` }).join('') + `</div>`;
+
+    h += `<p style="color:var(--accent)">BEAST PERKS</p><div class="shop-grid">` + Object.keys(perks).map(k=>{ const owned = save.owned.includes(k), eq = save.eqPerks.includes(k); return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','perk',${perks[k].p})">${perks[k].n}<br><span class="price">${owned?(eq?'ACTIVE':'OWNED'):`${perks[k].p.toLocaleString()} UP`}</span></div>` }).join('') + `</div>`;
+
+    h += `<p style="color:var(--accent)">CYBER-CORES</p><div class="shop-grid">` + Object.keys(cores).map(k=>{ const owned = save.owned.includes(k), eq = save.eqCores.includes(k); return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','core',${cores[k].p})">${cores[k].n}<br><b>${cores[k].desc}</b><br><span class="price">${owned?(eq?'ACTIVE':'OWNED'):`${cores[k].p.toLocaleString()} UP`}</span></div>` }).join('') + `</div>`;
+  }
+
+  if(currentTab === 'shapes'){
+    h += `<p style="color:var(--accent)">CUSTOM SHAPES</p><div class="shop-grid">`;
+    Object.keys(shapes).forEach(k=>{
+      const owned = save.ownedShapes.includes(k);
+      const eq = save.eqShape === k;
+      h += `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="${owned?`setShape('${k}')`:`buyShape('${k}',${shapes[k].price})`}">
+        ${shapes[k].name}<br>
+        <span class="price">${owned?(eq?'EQUIPPED':'OWNED'):(shapes[k].price.toLocaleString()+' UP')}</span>
+      </div>`;
+    });
+    h += `</div>`;
+
+    // color picker & preview
+    h += `<p style="color:var(--accent)">SHAPE COLOR</p>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="color" id="shapeColorPicker" value="${save.shapeColor}" onchange="setShapeColor(this.value)" style="width:56px;height:36px;padding:0;border:none;"/>
+      <div style="color:#bbb;font-size:0.9rem">Wybrany kolor</div>
+    </div>
+    <div style="margin-top:8px;color:#777;font-size:0.85rem">Kup shape -> kliknij ponownie, żeby go wyposażyć lub odznaczyć.</div>`;
+  }
+
+  document.getElementById('shopList').innerHTML = h;
+}
+
+// ---------- SHAPES: buy/equip/color ----------
+function buyShape(id, price){
+  if(!save.ownedShapes.includes(id)){
+    if(save.up >= price){
+      save.up -= price;
+      save.ownedShapes.push(id);
+      playPurchase();
+      saveData();
+    } else { playBeep(220,0.08,'sine',0.08); return; }
+  }
+  // if already owned, equip/unequip behaviour:
+  if(save.eqShape === id) save.eqShape = null;
+  else save.eqShape = id;
+  saveData();
+  updateUI();
+  renderShop();
+}
+function setShape(id){
+  save.eqShape = id;
+  saveData();
+  updateUI();
+  renderShop();
+}
+function setShapeColor(col){
+  save.shapeColor = col;
+  // update UI color input if present
+  const el = document.getElementById('shapeColorPicker');
+  if(el) el.value = col;
+  saveData();
+}
+
+// ---------- existing setSkin/buy (unchanged) ----------
+window.setSkin = (k) => { save.eqSkin = k; saveData(); updateUI(); renderShop(); }
+window.buy = (id,type,price) => {
+  let justBought = false;
+  if(!save.owned.includes(id)){
+    if(save.up >= price){ save.up -= price; save.owned.push(id); playPurchase(); justBought = true; } else { playBeep(220,0.08,'sine',0.08); return }
+  }
+  if(type === 'drone') save.eqDrone = (save.eqDrone === id ? null : id);
+  if(type === 'perk') {
+    if(save.eqPerks.includes(id)) save.eqPerks = save.eqPerks.filter(x=>x!==id);
+    else { save.eqPerks.push(id); playPerkEquip(); } // new sfx for perks
+  }
+  if(type === 'core') {
+    if(save.eqCores.includes(id)) save.eqCores = [];
+    else { save.eqCores = [id]; playCoreEquip(); }
+  }
+  saveData(); updateUI(); renderShop();
+}
+
+// ---------- SHOP TOGGLE ----------
+function toggleShop(){
+  const s=document.getElementById('shop');
+  if(s.classList.contains('open')){ s.classList.remove('open'); s.setAttribute('aria-hidden','true'); playCloseShop(); }
+  else { s.classList.add('open'); s.setAttribute('aria-hidden','false'); renderShop(); playOpenShop(); }
+}
+
+// ---------- EVENTS (unchanged) ----------
 function triggerEvent(){
-  // block events if boss active or already an event running
   if(eventActive || bossActive) return;
   eventActive = true;
-  const events = ['HYPER-COIN','GRID OVERLOAD','TIME DILATION','EMP BURST','AEGIS REGEN','NEON REIGN','BLACKOUT','GRAVITY WELL','SOLAR FLARE','SCRAMBLE','PHANTOM','GOLD RUSH','NIGHTMARE RUSH',"HELL'S GATE", 'RAINBOW RAVE', 'NOVA STORM'];
+  const events = ['HYPER-COIN','GRID OVERLOAD','TIME DILATION','EMP BURST','AEGIS REIGN','NEON REIGN','BLACKOUT','GRAVITY WELL','SOLAR FLARE','SCRAMBLE','PHANTOM','GOLD RUSH','NIGHTMARE RUSH',"HELL'S GATE", 'RAINBOW RAVE', 'NOVA STORM'];
   const ev = events[Math.floor(Math.random()*events.length)];
   currentEvent = ev;
   const banner = document.getElementById('event-banner');
@@ -287,50 +431,37 @@ function triggerEvent(){
   banner.style.color = (ev==="HELL'S GATE" || ev==='NOVA STORM')? '#ff2e2e' : 'var(--accent)';
   playEvent(ev==="HELL'S GATE" ? 'boss' : 'normal');
 
-  // reset special mode flags
   rainbowMode = false; novaMode = false;
 
   if(ev === 'TIME DILATION') timeMod = 0.4;
   if(ev === 'EMP BURST') enemies = [];
   if(ev === 'AEGIS REGEN') p.hasShield = true;
-  if(ev === 'GRAVITY WELL') { /* handled in loop */ }
-  if(ev === 'NIGHTMARE RUSH') { timeMod = 1.6; /* enemies spawn faster + low alpha */ }
+  if(ev === 'NIGHTMARE RUSH') { timeMod = 1.6; }
   if(ev === "HELL'S GATE"){
-    // start boss — make sure eventActive remains true while boss is running
     bossActive = true;
-    bossTimer = 300; // 5 seconds at ~60fps
-    // spawn initial heavy wave
+    bossTimer = 300;
     enemies = [];
     for(let i=0;i<12;i++) enemies.push({ x: Math.random()*860+20, y: -100 - i*50, v: 5 + i*0.3, isBoss: (i%4===0) });
   }
-  if(ev === 'RAINBOW RAVE'){
-    rainbowMode = true;
-    // increase coins spawn & score for a short time
-    playRainbowRave();
-  }
+  if(ev === 'RAINBOW RAVE'){ rainbowMode = true; playRainbowRave(); }
   if(ev === 'NOVA STORM'){
-    novaMode = true;
-    timeMod = 1.4;
-    // spawn rapid enemies
+    novaMode = true; timeMod = 1.4;
     for(let i=0;i<18;i++) enemies.push({ x: Math.random()*880+10, y:-100 - Math.random()*400, v:4 + Math.random()*5, isBoss:false });
     playNova();
   }
 
-  // auto-hide banner & clear non-boss eventActive after 9s; if bossActive remains, eventActive stays true until boss ends
   setTimeout(()=>{ 
     if(!bossActive){ banner.style.display='none'; eventActive=false; }
     if(currentEvent==='NIGHTMARE RUSH' || currentEvent==='TIME DILATION') timeMod = save.eqPerks.includes('chronos') ? 0.8 : 1; 
-    // reset special flags
     rainbowMode = false; novaMode = false;
     currentEvent=''; 
   }, 9000);
 }
-
 function triggerBoss(){
   if(bossActive) return;
   bossActive = true;
-  eventActive = true; // ensure no other event triggers
-  bossTimer = 300; // 5 seconds
+  eventActive = true;
+  bossTimer = 300;
   const banner = document.getElementById('event-banner');
   banner.innerText = "BOSS PHASE: THE BEAST!";
   banner.style.display = 'block'; banner.style.color = 'var(--danger)';
@@ -338,17 +469,16 @@ function triggerBoss(){
   enemies = [];
 }
 
-// ---------- LEADERBOARDS ----------
+// ---------- LEADERBOARDS (unchanged) ----------
 function toggleLeaderboard(){ const l=document.getElementById('ld-screen'); l.style.display = (l.style.display==='flex') ? 'none' : 'flex'; if(l.style.display==='flex') fetchCloud(); }
 function renderLeaderboards(){ const st=document.getElementById('scoreTable'), wt=document.getElementById('wealthTable'); let scoreData=[...save.ld_scores].sort((a,b)=>b.v-a.v).slice(0,10); let wealthData=[...save.ld_wealth].sort((a,b)=>b.v-a.v).slice(0,10); let sh=`<tr><th>RANK</th><th>PILOT</th><th>SCORE</th></tr>`; scoreData.forEach((r,i)=>{ let color=i===0?"var(--accent)":"#fff"; let rankName=i===0?"👑":i+1; sh+=`<tr style="color:${color}"><td>${rankName}</td><td>${r.n}</td><td>${r.v.toLocaleString()}</td></tr>` }); st.innerHTML=sh; let wh=`<tr><th>RANK</th><th>PILOT</th><th>WEALTH</th></tr>`; wealthData.forEach((r,i)=>{ let color=i===0?"var(--accent-2)":"#ccc"; wh+=`<tr style="color:${color}"><td>${i+1}</td><td>${r.n}</td><td>$${r.v.toLocaleString()}</td></tr>` }); wt.innerHTML=wh; }
 
-// ---------- MAIN LOOP ----------
+// ---------- MAIN LOOP (trail drawing updated to respect shapes) ----------
 function loop(){
   if(!active) return;
   ctx.fillStyle = currentEvent==='SOLAR FLARE' ? 'rgba(253,182,90,0.4)' : (bossActive ? 'rgba(50,0,0,0.3)' : 'rgba(0,0,0,0.3)');
   ctx.fillRect(0,0,900,600);
 
-  // trigger boss/event only if not already bossActive
   if(!bossActive && score >= lastBossScore + 100000){ triggerBoss(); lastBossScore = score; }
   if(!bossActive && score >= lastEventScore + 5000){ triggerEvent(); lastEventScore = score; }
 
@@ -372,22 +502,74 @@ function loop(){
     else if(document.body.dataset.rainbow === 'true') color = `hsl(${(Date.now()/10 + i*6) % 360},100%,50%)`;
     else color = skinColor;
 
-    ctx.fillStyle = color; ctx.globalAlpha = i/maxTrail; ctx.beginPath();
-    let sMult = (currentEvent === 'SOLAR FLARE') ? 2 : 1;
-    if(skins[save.eqSkin] && skins[save.eqSkin].t === 'ball'){
-      let w = 12 + i * p.size * 0.25;
-      ctx.save(); ctx.translate(t.x,t.y); ctx.rotate(Math.sin(Date.now()/200)*0.04); ctx.fillRect(-w, -6*(i/maxTrail+1), w*2, 12*(i/maxTrail+1)); ctx.restore();
-    } else ctx.arc(t.x,t.y,(i * p.size) * sMult,0,Math.PI*2);
-    ctx.fill();
+    ctx.globalAlpha = i/maxTrail;
+    // If player has an equipped SHAPE, draw that for the trail (using shapeColor)
+    if(save.eqShape){
+      ctx.fillStyle = save.shapeColor || '#fff';
+      const sMult = (currentEvent === 'SOLAR FLARE') ? 1.6 : 1.0;
+      if(save.eqShape === 'triangle'){
+        ctx.beginPath();
+        ctx.moveTo(t.x, t.y - 12 * sMult);
+        ctx.lineTo(t.x - 12 * sMult, t.y + 12 * sMult);
+        ctx.lineTo(t.x + 12 * sMult, t.y + 12 * sMult);
+        ctx.closePath();
+        ctx.fill();
+      } else if(save.eqShape === 'square'){
+        ctx.fillRect(t.x - 12 * sMult, t.y - 12 * sMult, 24 * sMult, 24 * sMult);
+      } else if(save.eqShape === 'diamond'){
+        ctx.beginPath();
+        ctx.moveTo(t.x, t.y - 16 * sMult);
+        ctx.lineTo(t.x - 16 * sMult, t.y);
+        ctx.lineTo(t.x, t.y + 16 * sMult);
+        ctx.lineTo(t.x + 16 * sMult, t.y);
+        ctx.closePath();
+        ctx.fill();
+      } else if(save.eqShape === 'star'){
+        ctx.beginPath();
+        for(let si=0; si<5; si++){
+          const outer = 12 * sMult;
+          const inner = 5 * sMult;
+          ctx.lineTo(t.x + outer * Math.cos((18 + si*72) * Math.PI/180), t.y - outer * Math.sin((18 + si*72) * Math.PI/180));
+          ctx.lineTo(t.x + inner * Math.cos((54 + si*72) * Math.PI/180), t.y - inner * Math.sin((54 + si*72) * Math.PI/180));
+        }
+        ctx.closePath();
+        ctx.fill();
+      } else if(save.eqShape === 'hexagon'){
+        ctx.beginPath();
+        const R = 12 * sMult;
+        for(let h=0; h<6; h++){
+          ctx.lineTo(t.x + R * Math.cos(h * 2*Math.PI/6), t.y + R * Math.sin(h * 2*Math.PI/6));
+        }
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        // fallback: circle
+        ctx.beginPath();
+        ctx.arc(t.x,t.y,(i * p.size) * ((currentEvent === 'SOLAR FLARE') ? 2 : 1),0,Math.PI*2);
+        ctx.fill();
+      }
+    } else {
+      // original skin / ball rendering
+      ctx.fillStyle = color;
+      let sMult = (currentEvent === 'SOLAR FLARE') ? 2 : 1;
+      if(skins[save.eqSkin] && skins[save.eqSkin].t === 'ball'){
+        let w = 12 + i * p.size * 0.25;
+        ctx.save(); ctx.translate(t.x,t.y); ctx.rotate(Math.sin(Date.now()/200)*0.04); ctx.fillRect(-w, -6*(i/maxTrail+1), w*2, 12*(i/maxTrail+1)); ctx.restore();
+      } else {
+        ctx.beginPath();
+        ctx.arc(t.x,t.y,(i * p.size) * sMult,0,Math.PI*2);
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
   });
-  ctx.globalAlpha = 1;
 
-  // boss timer handling
+  // boss timer handling (unchanged)
   if(bossActive){
     bossTimer--;
     if(bossTimer <= 0){
       bossActive = false;
-      eventActive = false; // allow events again
+      eventActive = false;
       let bonus = 100000;
       if(Array.isArray(save.eqCores) && save.eqCores.length) save.eqCores.forEach(c => { if(cores[c] && cores[c].m) bonus *= cores[c].m });
       if(save.eqCores.includes('apex')) bonus = Math.floor(bonus * 1.6);
@@ -398,7 +580,7 @@ function loop(){
     }
   }
 
-  // drone behavior & kills
+  // drone behavior & kills (unchanged)
   if(save.eqDrone){
     droneAngle += 0.15 * timeMod;
     let dx = p.x + Math.cos(droneAngle) * 75, dy = p.y + Math.sin(droneAngle) * 75;
@@ -418,21 +600,16 @@ function loop(){
         ctx.strokeStyle = (skins[save.eqSkin] && skins[save.eqSkin].c !== 'rainbow') ? skins[save.eqSkin].c : '#fff';
         ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(dx,dy); ctx.lineTo(enemies[nearestIdx].x,enemies[nearestIdx].y); ctx.stroke();
 
-        // sfx
         playDroneShot();
-
-        // base kill: 150 if player has a drone (weapon), otherwise 10
         const baseKill = save.eqDrone ? 150 : 10;
         addScore(baseKill);
 
-        // vampire perk: grant percentage of base kill as UP
         if(save.eqPerks.includes('vampire')){
           let steal = Math.floor(baseKill * 0.12);
           save.up += steal;
           updateUI();
         }
 
-        // kill sfx
         playKill();
 
         enemies.splice(nearestIdx,1);
@@ -441,12 +618,11 @@ function loop(){
     }
   }
 
-  // enemy spawn - still spawns during boss (game design choice), events are blocked while bossActive due to eventActive flag
+  // enemy spawn & movement & coins (unchanged)
   if(Math.random() < (bossActive ? 0.25 : 0.14) * (currentEvent === 'NIGHTMARE RUSH' ? 1.8 : 1) * (novaMode?1.6:1)){
     enemies.push({ x: Math.random()*880+10, y:-100, v:(3.5+score/5000) * (bossActive?1.4:1) * (novaMode?1.6:1), isBoss: bossActive });
   }
 
-  // enemy movement & collisions
   enemies.forEach((en,i)=>{
     en.y += en.v * timeMod;
     let sz = en.isBoss ? 66 : 22;
@@ -454,9 +630,7 @@ function loop(){
     ctx.fillStyle = en.isBoss ? '#ff0000' : 'var(--accent)'; ctx.fillRect(en.x - sz/2, en.y - sz/2, sz, sz);
     ctx.globalAlpha = 1.0;
     if(!p.god && Math.hypot(p.x-en.x, p.y-en.y) < sz/2 + 5){
-      // PHASE SHIFT perk: chance to avoid death
       if(save.eqPerks.includes('phase_shift') && Math.random() < 0.35){
-        // small effect: blink and survive
         p.x += (Math.random()-0.5)*80; p.y += (Math.random()-0.5)*80;
         playBeep(880,0.05,'triangle',0.14);
         enemies.splice(i,1);
@@ -464,21 +638,19 @@ function loop(){
         if(p.hasShield){ p.hasShield=false; enemies.splice(i,1) } else die("DESTRUCTION DETECTED");
       }
     }
-    if(en.y > 700){ enemies.splice(i,1); addScore(10); } // off-screen = small score (still goes through multiplier)
+    if(en.y > 700){ enemies.splice(i,1); addScore(10); }
   });
 
-  // coins
   let coinChance = currentEvent === 'GOLD RUSH' ? 0.25 : 0.05;
-  if(rainbowMode) coinChance *= 1.5; // increased coin spawn during rainbow rave
+  if(rainbowMode) coinChance *= 1.5;
   if(Math.random() < coinChance) coins.push({ x: Math.random()*850+25, y:-20 });
   coins.forEach((cn,i)=>{
     cn.y += 2.5 * timeMod;
     if(save.eqPerks.includes('magnet') && Math.hypot(p.x-cn.x, p.y-cn.y) < 200){ cn.x += (p.x - cn.x) * 0.15; cn.y += (p.y - cn.y) * 0.15 }
     if(Math.hypot(p.x-cn.x, p.y-cn.y) < 30){
       let baseVal = 150 + (score * 0.2);
-      if(save.eqPerks.includes('recycler')) baseVal = Math.floor(baseVal * 1.25); // recycler perk effect
+      if(save.eqPerks.includes('recycler')) baseVal = Math.floor(baseVal * 1.25);
       if(Array.isArray(save.eqCores) && save.eqCores.length) save.eqCores.forEach(c => { if(!c.includes('score') && cores[c] && cores[c].m) baseVal *= cores[c].m });
-      // flare perk amplifies solar coin value during SOLAR FLARE & RAINBOW RAVE
       if(save.eqPerks.includes('flare') && (currentEvent === 'SOLAR FLARE' || rainbowMode)) baseVal = Math.floor(baseVal * 1.5);
       save.up += Math.floor(baseVal);
       coins.splice(i,1); updateUI(); playCoin();
@@ -525,53 +697,12 @@ async function die(reason){
 // ---------- SAVE ----------
 function saveData(){ localStorage.setItem('nd_v10_final', JSON.stringify(save)); }
 
-// ---------- SHOP RENDER ----------
-function renderShop(){
-  let h = `<p style="color:var(--accent)">CORE SKINS</p><div class="shop-grid">` + Object.keys(skins).map(k=>{ const owned = save.owned.includes(k); const eq = save.eqSkin === k; const price = skins[k].p ? skins[k].p.toLocaleString()+' UP' : 'FREE'; return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="${owned?`setSkin('${k}')`:`buy('${k}','skin',${skins[k].p})`}">${k.toUpperCase()}<span class="price">${price}</span></div>` }).join('') + `</div>`;
-
-  let keys = Object.keys(drones);
-  const mids = ['midblade','raptor'];
-  keys = keys.filter(k=>!mids.includes(k));
-  const midIndex = Math.floor(keys.length/2);
-  keys.splice(midIndex,0,...mids);
-
-  h += `<p style="color:var(--accent)">BEAST WEAPONS</p><div class="shop-grid">` + keys.map(k=>{ const owned = save.owned.includes(k), eq = save.eqDrone === k; const priceText = drones[k].p.toLocaleString(); return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','drone',${drones[k].p})">${drones[k].n}<br><span class="price">${owned?(eq?'EQUIPPED':'OWNED'):`${priceText} UP`}</span></div>` }).join('') + `</div>`;
-
-  h += `<p style="color:var(--accent)">BEAST PERKS</p><div class="shop-grid">` + Object.keys(perks).map(k=>{ const owned = save.owned.includes(k), eq = save.eqPerks.includes(k); return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','perk',${perks[k].p})">${perks[k].n}<br><span class="price">${owned?(eq?'ACTIVE':'OWNED'):`${perks[k].p.toLocaleString()} UP`}</span></div>` }).join('') + `</div>`;
-
-  h += `<p style="color:var(--accent)">CYBER-CORES</p><div class="shop-grid">` + Object.keys(cores).map(k=>{ const owned = save.owned.includes(k), eq = save.eqCores.includes(k); return `<div class="item ${owned?'owned':''} ${eq?'eq':''}" onclick="buy('${k}','core',${cores[k].p})">${cores[k].n}<br><b>${cores[k].desc}</b><br><span class="price">${owned?(eq?'ACTIVE':'OWNED'):`${cores[k].p.toLocaleString()} UP`}</span></div>` }).join('') + `</div>`;
-
-  document.getElementById('shopList').innerHTML = h;
-}
-
-window.setSkin = (k) => { save.eqSkin = k; saveData(); updateUI(); renderShop(); }
-window.buy = (id,type,price) => {
-  let justBought = false;
-  if(!save.owned.includes(id)){
-    if(save.up >= price){ save.up -= price; save.owned.push(id); playPurchase(); justBought = true; } else { playBeep(220,0.08,'sine',0.08); return }
-  }
-  if(type === 'drone') save.eqDrone = (save.eqDrone === id ? null : id);
-  if(type === 'perk') {
-    if(save.eqPerks.includes(id)) save.eqPerks = save.eqPerks.filter(x=>x!==id);
-    else { save.eqPerks.push(id); playPerkEquip(); } // new sfx for perks
-  }
-  if(type === 'core') {
-    if(save.eqCores.includes(id)) save.eqCores = [];
-    else { save.eqCores = [id]; playCoreEquip(); }
-  }
-  saveData(); updateUI(); renderShop();
-}
-
-function toggleShop(){
-  const s=document.getElementById('shop');
-  if(s.classList.contains('open')){ s.classList.remove('open'); s.setAttribute('aria-hidden','true'); playCloseShop(); }
-  else { s.classList.add('open'); s.setAttribute('aria-hidden','false'); renderShop(); playOpenShop(); }
-}
-
+// ---------- INPUTS & HOTKEYS ----------
 window.addEventListener('mousemove', e=>{ const r=canvas.getBoundingClientRect(); p.tx = (e.clientX - r.left) * (900/r.width); p.ty = (e.clientY - r.top) * (600/r.height); });
-window.addEventListener('keydown', e=>{ if(e.key==='`'){ const con=document.getElementById('console'); con.style.display=(con.style.display==='block')?'none':'block'; if(con.style.display==='block') document.getElementById('consoleInput').focus(); } if(e.key==='Enter' && document.activeElement.id==='consoleInput'){ let cmd=document.getElementById('consoleInput').value.toUpperCase(); if(cmd==='RICH'){ save.up += 100000000; updateUI(); playPurchase() } if(cmd==='GOD'){ p.god = !p.god; playBeep(660,0.08,'sine',0.15) } if(cmd==='UNLOCK ALL'){ const allItems = [...Object.keys(skins), ...Object.keys(drones), ...Object.keys(perks), ...Object.keys(cores)]; save.owned = [...new Set([...save.owned, ...allItems])]; if(document.getElementById('shop').classList.contains('open')) renderShop(); } document.getElementById('consoleInput').value=''; saveData(); updateUI(); } });
+window.addEventListener('keydown', e=>{ if(e.key==='`'){ const con=document.getElementById('console'); con.style.display=(con.style.display==='block')?'none':'block'; if(con.style.display==='block') document.getElementById('consoleInput').focus(); } if(e.key==='Enter' && document.activeElement.id==='consoleInput'){ let cmd=document.getElementById('consoleInput').value.toUpperCase(); if(cmd==='RICH'){ save.up += 100000000; updateUI(); playPurchase() } if(cmd==='GOD'){ p.god = !p.god; playBeep(660,0.08,'sine',0.15) } if(cmd==='UNLOCK ALL'){ const allItems = [...Object.keys(skins), ...Object.keys(drones), ...Object.keys(perks), ...Object.keys(cores)]; save.owned = [...new Set([...save.owned, ...allItems])]; save.ownedShapes = [...new Set([...save.ownedShapes, ...Object.keys(shapes)])]; if(document.getElementById('shop').classList.contains('open')) renderShop(); } document.getElementById('consoleInput').value=''; saveData(); updateUI(); } });
 
 updateUI();
+switchTab('skins'); // initialize shop tab + render
 renderShop();
 
 </script>
