@@ -162,11 +162,11 @@ const skins = {
 
 // ---------- SHAPES ----------
 const shapes = {
-  'triangle': { name:'Triangle Core', price:2000 },
-  'square':   { name:'Square Block',  price:3000 },
-  'diamond':  { name:'Diamond Edge',  price:5000 },
-  'star':     { name:'Star Pulse',    price:8000 },
-  'hexagon':  { name:'Hexa Shield',   price:12000 }
+  'triangle': { name:'Triangle Core', price:100000 },
+  'square':   { name:'Square Block',  price:100000 },
+  'diamond':  { name:'Diamond Edge',  price:100000 },
+  'star':     { name:'Star Pulse',    price:100000 },
+  'hexagon':  { name:'Hexa Shield',   price:100000 }
 };
 
 // ---------- DRONES (weapons) ----------
@@ -356,7 +356,7 @@ function renderShop(){
       <input type="color" id="shapeColorPicker" value="${save.shapeColor}" onchange="setShapeColor(this.value)" style="width:56px;height:36px;padding:0;border:none;"/>
       <div style="color:#bbb;font-size:0.9rem">Wybrany kolor</div>
     </div>
-    <div style="margin-top:8px;color:#777;font-size:0.85rem">Kup shape -> kliknij ponownie, żeby go wyposażyć lub odznaczyć.</div>`;
+    <div style="margin-top:8px;color:#777;font-size:0.85rem">?</div>`;
   }
 
   document.getElementById('shopList').innerHTML = h;
