@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>Neon Drift: End 3.0</title>
+<title>Neon Drift: 4.0</title>
 <style>
 :root{--accent:#ff6600;--accent-2:#00ff44;--bg:#050508;--panel:#0a0a0c;--muted:#ccc;--danger:#ff0000}
 *{box-sizing:border-box;touch-action:none;-webkit-user-select:none}
 body{margin:0;background:var(--bg);color:var(--accent);font-family:'Courier New',monospace;overflow:hidden;display:flex;justify-content:center;align-items:center;height:100vh}
 canvas{border:5px solid var(--accent);background:#000;width:95vw;height:auto;max-height:75vh;aspect-ratio:9/6;box-shadow:0 0 30px rgba(255,102,0,0.4);cursor:none}
-#hud{position:absolute;top:10px;width:95vw;display:flex;justify-content:space-between;z-index:5000;pointer-events:none}
+#hud{position:absolute;top:10px;width:95vw;display:flex;justify-content:space-between;z-index:5000;pointer-events:none;gap:12px}
 .stat-box{background:rgba(0,0,0,0.9);padding:12px;border:2px solid var(--accent);border-left:8px solid var(--accent);pointer-events:none;color:var(--muted)}
 .m-btn{background:var(--accent);border:none;color:#000;padding:10px 20px;cursor:pointer;font-family:inherit;font-weight:900;pointer-events:auto;margin-left:5px;clip-path:polygon(10% 0,100% 0,90% 100%,0 100%);transition:transform 280ms cubic-bezier(.2,.9,.2,1),background 120ms}
 .m-btn:hover{transform:translateY(-3px);background:#fff}
@@ -28,7 +28,7 @@ input{background:#111;border:2px solid var(--accent);color:var(--accent);padding
 #console{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);padding:5px;display:none;z-index:9999;border:1px solid var(--accent)}
 #console input{background:transparent;border:none;color:var(--accent);font-family:'Courier New',monospace;padding:5px;width:250px;font-size:0.8rem;text-align:center;border-bottom:1px solid var(--accent);outline:none}
 #event-banner{position:absolute;top:100px;width:100%;text-align:center;font-size:3rem;font-weight:900;text-shadow:0 0 20px var(--danger);pointer-events:none;display:none;z-index:7000;font-style:italic;color:var(--accent)}
-#ld-screen{display:none;position:absolute;inset:0;background:var(--bg);z-index:8000;flex-direction:column;align-items:center;padding:40px;overflow-y:auto}
+/* Leaderboard styles kept but we remove the DOM for leaderboard entirely */
 .ld-table{width:100%;max-width:600px;border-collapse:collapse;margin-top:20px;color:#fff}
 .ld-table th{color:var(--accent);border-bottom:3px solid var(--accent);padding:10px;text-align:left}
 .ld-table td{padding:8px;border-bottom:1px solid #222;font-size:0.9rem}
@@ -37,7 +37,8 @@ input{background:#111;border:2px solid var(--accent);color:var(--accent);padding
 .theme-btn{width:36px;height:36px;border-radius:8px;border:2px solid #222;cursor:pointer}
 .small-note{font-size:0.75rem;color:#bbb;margin-bottom:8px}
 
-/* Rainbow UI support (used when body.dataset.rainbow === 'true') */
+/* tiny toast */
+#flex-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18vh;background:#111;padding:10px 18px;border:2px solid var(--accent);color:var(--accent);border-radius:8px;z-index:10000;display:none}
 .rainbow-accent {
   background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff);
   -webkit-background-clip: text;
@@ -48,24 +49,103 @@ input{background:#111;border:2px solid var(--accent);color:var(--accent);padding
 @keyframes rainbowShift {
   0%{filter: hue-rotate(0deg)} 100%{filter: hue-rotate(360deg)}
 }
+
+/* Styl dla nakładki czapki (warstwa nad canvas) */
+#hatOverlay {
+  position: absolute;
+  pointer-events: none;
+  z-index: 7001; /* nad event-banner */
+  transform: translate(-50%,-100%);
+  font-size: 30px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+  will-change: transform, left, top;
+  transition: transform 80ms linear;
+  display: none;
+}
+#hatOverlay .hatName {
+  display:block;
+  font-size:11px;
+  color:#fff;
+  background:rgba(0,0,0,0.6);
+  padding:4px 8px;
+  border-radius:6px;
+  border:1px solid var(--accent);
+  margin-top:6px;
+  white-space:nowrap;
+  font-weight:700;
+}
+.hat-btn{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:6px 8px;margin-left:6px;cursor:pointer;font-size:0.75rem}
+.hat-btn.buy{background:rgba(0,0,0,0.6)}
+.hat-row{display:flex;align-items:center;gap:8px;justify-content:space-between;margin-bottom:8px}
+.hat-emoji{font-size:22px;margin-right:8px}
+
+/* ----- RESET UI: przycisk i modal ----- */
+#resetBtn {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 10002;
+  background: rgba(0,0,0,0.8);
+  border: 2px solid var(--danger);
+  color: var(--accent);
+  padding: 8px 12px;
+  font-weight:800;
+  cursor: pointer;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+}
+#resetModal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 10003;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.6);
+}
+#resetModal .box {
+  width: 420px;
+  background: #070707;
+  border: 2px solid var(--danger);
+  padding: 18px;
+  color: #ddd;
+  border-radius: 10px;
+  text-align: left;
+}
+#resetModal .box h3 { margin:0 0 8px 0; color: var(--danger); }
+#resetModal .box p{ margin:6px 0; font-size:0.95rem; color:#bbb; }
+#resetModal .warn-list{ margin:8px 0 12px 0; padding-left:18px; color:#f7d7d7; }
+#resetModal .controls{ display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+#resetModal .controls button{ padding:8px 12px; border-radius:6px; border:1px solid #333; cursor:pointer; font-weight:700; }
+#resetModal .controls button.danger{ background:var(--danger); color:#000; border-color: #aa0000; }
+#resetModal input[type="text"]{ width:100%; padding:8px; margin-top:8px; background:#111; border:1px solid #333; color:var(--accent); border-radius:6px; outline:none; box-sizing:border-box; }
 </style>
 </head>
 <body>
 <div id="event-banner">Chaos mode</div>
 
 <div id="hud">
-  <div class="stat-box">
+  <div class="stat-box" aria-hidden="true">
     SCORE: <span id="sc">0</span> | BEST: <span id="hi" style="color:var(--accent)">0</span><br>
     <span style="color:#fff">UP: <span id="upc">0</span></span><br>
     <span style="color:#bbb">MULT: <span id="mult">x1</span></span>
   </div>
-  <div>
+
+  <!-- Flex Score panel (clickable) -->
+  <div class="stat-box" id="flexBox" style="pointer-events:auto;cursor:pointer;min-width:190px;text-align:left" title="Kliknij, aby skopiować FLEX SCORE do Discorda" onclick="copyFlexScore()">
+    <div style="font-weight:900;color:var(--accent);margin-bottom:6px">FLEX SCORE</div>
+    😊 <span id="flexNick" style="color:#fff;font-weight:700">PILOT</span><br>
+    ⭐ BEST: <span id="flexBest" style="color:var(--accent)">0</span><br>
+    💰 CASH: <span id="flexCash" style="color:var(--accent-2)">0</span>
+  </div>
+
+  <div style="display:flex;align-items:center;pointer-events:auto">
     <button class="m-btn" onclick="toggleShop()">Neon SHOP</button>
   </div>
 </div>
 
 <div id="shop" class="sidebar" aria-hidden="true">
-  <h2 style="color:var(--accent);margin-top:0;">Neon ARMORY 3.0</h2>
+  <h2 style="color:var(--accent);margin-top:0;">Neon ARMORY 4.0</h2>
   <div class="small-note">THEMES:</div>
   <div class="theme-row" id="themeRow"></div>
 
@@ -85,28 +165,45 @@ input{background:#111;border:2px solid var(--accent);color:var(--accent);padding
   <input type="text" id="nickInput" placeholder="PILOT_ID" maxlength="15"/>
   <div style="display:flex;flex-wrap:wrap;justify-content:center;">
     <button class="start-btn" onclick="startGame()">ENGAGE</button>
-    <button class="start-btn" style="border-color:#fff;color:#fff;" onclick="toggleLeaderboard()">RECORDS</button>
+    <!-- RECORDS -> replaced by FLEX copy action -->
+    <button class="start-btn" style="border-color:#fff;color:#fff;" onclick="copyFlexScore()">FLEX</button>
   </div>
 </div>
 
-<div id="ld-screen">
-  <h1 style="color:var(--accent);font-size:3rem;text-shadow:0 0 20px var(--accent);">GLOBAL ARCHIVE 3.0</h1>
-  <div style="display:flex;gap:30px;width:100%;max-width:900px;justify-content:center;">
-    <div style="flex:1;background:rgba(255,102,0,0.03);padding:15px;border:1px solid #333;">
-      <h3 style="color:var(--accent);text-align:center;">LEGENDS (SCORE)</h3>
-      <table class="ld-table" id="scoreTable"></table>
-    </div>
-    <div style="flex:1;background:rgba(0,255,68,0.03);padding:15px;border:1px solid #333;">
-      <h3 style="color:var(--accent-2);text-align:center;">TYCOONS (CASH)</h3>
-      <table class="ld-table" id="wealthTable"></table>
-    </div>
-  </div>
-  <div style="margin-top:12px;color:#bbb;font-size:0.9rem;">Update notes: boss = 5s, kills: 150 (z dronem) / 10 (bez broni). Multipliery zbalansowane. Nowe bronie, perki i eventy!</div>
-  <button class="start-btn" style="margin-top:20px;border-color:var(--accent);color:var(--accent);" onclick="toggleLeaderboard()">RETURN TO COCKPIT</button>
-</div>
+<!-- removed leaderboard DOM (GLOBAL ARCHIVE) entirely -->
 
 <div id="console"><input type="text" id="consoleInput" placeholder="ROOT_ACCESS_..."></div>
 <canvas id="c"></canvas>
+
+<div id="flex-toast">FLEX COPIED — wklej na Discord</div>
+
+<!-- nakładka wizualna czapki -->
+<div id="hatOverlay">
+  <div id="hatEmoji" style="font-size:30px; text-align:center;">👑</div>
+  <div class="hatName" id="hatName">Crown</div>
+</div>
+
+<!-- PRZYCISK RESET -->
+<div id="resetBtn" title="Resetuj wszystkie zakupy">RESET</div>
+
+<!-- MODAL RESET -->
+<div id="resetModal" aria-hidden="true">
+  <div class="box" role="dialog" aria-modal="true" aria-labelledby="resetTitle">
+    <h3 id="resetTitle">Uwaga — Reset zakupów</h3>
+    <p>To działanie <strong>usunie wszystkie zakupione przedmioty</strong> (skórki, bronie, perki, cores, shapes, hats) i przywróci UP do 5000.</p>
+    <ul class="warn-list">
+      <li>Usunięte: wszystkie pozycje z <code>save.owned</code>, <code>save.ownedShapes</code>, <code>save.ownedHats</code></li>
+      <li>Odczepione: <code>eqSkin, eqDrone, eqPerks, eqCores, eqShape, eqHat</code></li>
+      <li>UP zostanie ustawione na <strong>5000</strong></li>
+    </ul>
+    <p style="color:#f3d7d7;font-weight:700">Jeśli chcesz kontynuować, wpisz <code>RESET</code> poniżej i kliknij "Resetuj wszystko".</p>
+    <input id="resetConfirmInput" type="text" placeholder="Wpisz RESET, aby potwierdzić" autocomplete="off" />
+    <div class="controls">
+      <button id="cancelResetBtn">Anuluj</button>
+      <button id="confirmResetBtn" class="danger" disabled>Resetuj wszystko</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ---------- CORE / SAVE ----------
@@ -210,10 +307,11 @@ const cores = {
     'apex':    { n:'Apex Core', p:25000000000, m:8, desc:'8x All (ULTIMATE)' }
 };
 
+// disable cloud sync by leaving these blank
 const BIN_ID = '';
 const API_KEY = '';
 
-// ---------- CLOUD ----------
+// ---------- CLOUD (no-op when BIN_ID/API_KEY blank) ----------
 async function syncCloud(){
   try{
     if(!BIN_ID || !API_KEY) return;
@@ -231,7 +329,6 @@ async function fetchCloud(){
     const data = await res.json();
     save.ld_scores = data.record.scores || [];
     save.ld_wealth = data.record.wealth || [];
-    renderLeaderboards();
   }catch(e){ console.log("Cloud Fetch Error") }
 }
 
@@ -303,6 +400,78 @@ function updateUI(){
   // rainbow accent effect on some texts
   const title = document.getElementById('titleText');
   if(document.body.dataset.rainbow === 'true'){ title.classList.add('rainbow-accent') } else title.classList.remove('rainbow-accent');
+
+  // update flex score UI
+  updateFlexScore();
+
+  // jeśli sklep otwarty i na shapes, odśwież dodatkowe sekcje (np. czapki)
+  if(document.getElementById('shop').classList.contains('open') && currentTab === 'shapes') {
+    // renderShop() wywołuje się przy toggleShop, ale czasami warto zaktualizować UI
+    // (bez ryzyka nadpisania istniejącej logiki)
+    renderShop();
+  }
+}
+
+// ---------- FLEX SCORE (new system) ----------
+function updateFlexScore(){
+  const nick = save.nick || "PILOT";
+  const best = save.best || 0;
+  const cash = save.up || 0;
+  document.getElementById('flexNick').innerText = nick;
+  document.getElementById('flexBest').innerText = Math.floor(best).toLocaleString();
+  document.getElementById('flexCash').innerText = Math.floor(cash).toLocaleString();
+}
+
+// copy to clipboard and show mini-toast
+function copyFlexScore(){
+  const nick = save.nick || "PILOT";
+  const best = Math.floor(save.best || 0).toLocaleString();
+  const cash = Math.floor(save.up || 0).toLocaleString();
+
+  const text =
+`🔥 **NEON DRIFT — FLEX** 🔥
+😊 ${nick}
+⭐ BEST: ${best}
+💰 CASH: ${cash} UP
+
+> #NeonDrift #Flex`;
+
+  // clipboard
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>{
+      playPurchase();
+      showFlexToast("FLEX skopiowany — wklej na Discord");
+    }).catch(err=>{
+      // fallback
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text){
+  // fallback textarea copy
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  try{
+    document.execCommand('copy');
+    playPurchase();
+    showFlexToast("FLEX skopiowany (fallback)");
+  }catch(e){
+    alert("Nie udało się skopiować automatycznie. Skopiuj ręcznie:\n\n"+text);
+  }
+  document.body.removeChild(ta);
+}
+
+function showFlexToast(msg){
+  const t = document.getElementById('flex-toast');
+  t.innerText = msg;
+  t.style.display = 'block';
+  t.style.opacity = 1;
+  setTimeout(()=>{ t.style.transition = 'opacity 400ms'; t.style.opacity = 0; setTimeout(()=>{ t.style.display='none'; t.style.transition=''; },420); }, 1300);
 }
 
 // ---------- SHOP: tabs ----------
@@ -489,10 +658,6 @@ function triggerBoss(){
   playEvent('boss');
   enemies = [];
 }
-
-// ---------- LEADERBOARDS (unchanged) ----------
-function toggleLeaderboard(){ const l=document.getElementById('ld-screen'); l.style.display = (l.style.display==='flex') ? 'none' : 'flex'; if(l.style.display==='flex') fetchCloud(); }
-function renderLeaderboards(){ const st=document.getElementById('scoreTable'), wt=document.getElementById('wealthTable'); let scoreData=[...save.ld_scores].sort((a,b)=>b.v-a.v).slice(0,10); let wealthData=[...save.ld_wealth].sort((a,b)=>b.v-a.v).slice(0,10); let sh=`<tr><th>RANK</th><th>PILOT</th><th>SCORE</th></tr>`; scoreData.forEach((r,i)=>{ let color=i===0?"var(--accent)":"#fff"; let rankName=i===0?"👑":i+1; sh+=`<tr style="color:${color}"><td>${rankName}</td><td>${r.n}</td><td>${r.v.toLocaleString()}</td></tr>` }); st.innerHTML=sh; let wh=`<tr><th>RANK</th><th>PILOT</th><th>WEALTH</th></tr>`; wealthData.forEach((r,i)=>{ let color=i===0?"var(--accent-2)":"#ccc"; wh+=`<tr style="color:${color}"><td>${i+1}</td><td>${r.n}</td><td>$${r.v.toLocaleString()}</td></tr>` }); wt.innerHTML=wh; }
 
 // ---------- MAIN LOOP (trail drawing updated to respect shapes) ----------
 function loop(){
@@ -718,7 +883,7 @@ async function die(reason){
   let existingWealthIdx = save.ld_wealth.findIndex(r=>r.n===save.nick);
   if(existingWealthIdx !== -1){ save.ld_wealth[existingWealthIdx].v = currentWealth; } else save.ld_wealth.push({ n: save.nick, v: currentWealth });
   save.best = Math.max(save.best, currentScore);
-  saveData(); await syncCloud();
+  saveData(); await syncCloud(); // cloud is disabled unless BIN_ID/API_KEY provided
   document.getElementById('titleText').innerText = "WASTED";
   document.getElementById('subText').innerText = reason;
   document.getElementById('startScreen').style.display = 'flex';
@@ -733,9 +898,254 @@ function saveData(){ localStorage.setItem('nd_v10_final', JSON.stringify(save));
 window.addEventListener('mousemove', e=>{ const r=canvas.getBoundingClientRect(); p.tx = (e.clientX - r.left) * (900/r.width); p.ty = (e.clientY - r.top) * (600/r.height); });
 window.addEventListener('keydown', e=>{ if(e.key==='`'){ const con=document.getElementById('console'); con.style.display=(con.style.display==='block')?'none':'block'; if(con.style.display==='block') document.getElementById('consoleInput').focus(); } if(e.key==='Enter' && document.activeElement.id==='consoleInput'){ let cmd=document.getElementById('consoleInput').value.toUpperCase(); if(cmd==='RICH'){ save.up += 100000000; updateUI(); playPurchase() } if(cmd==='GOD'){ p.god = !p.god; playBeep(660,0.08,'sine',0.15) } if(cmd==='UNLOCK ALL'){ const allItems = [...Object.keys(skins), ...Object.keys(drones), ...Object.keys(perks), ...Object.keys(cores)]; save.owned = [...new Set([...save.owned, ...allItems])]; save.ownedShapes = [...new Set([...save.ownedShapes, ...Object.keys(shapes)])]; if(document.getElementById('shop').classList.contains('open')) renderShop(); } document.getElementById('consoleInput').value=''; saveData(); updateUI(); } });
 
+/* ===========================
+   DODATKOWY KOD: SYSTEM CZAPEK
+   (ADD-ONLY — NIE NADPISUJE ISTNIEJĄCYCH FUNKCJI)
+   =========================== */
+
+/* --- konfiguracja czapek --- */
+// koszt każdej czapki
+const HAT_PRICE = 100000;
+
+// definicja czapek (id, nazwa, ikona)
+const hats = {
+  crown: { name: "Crown", icon: "👑", price: HAT_PRICE },
+  top_hat: { name: "Top Hat", icon: "🎩", price: HAT_PRICE },
+  viking: { name: "Viking Helmet", icon: "🪖", price: HAT_PRICE },
+  wizard: { name: "Wizard Hat", icon: "🧙‍♂️", price: HAT_PRICE },
+  baseball: { name: "Baseball Cap", icon: "🧢", price: HAT_PRICE }
+};
+
+/* --- wczytaj/utwórz pola w save (jeśli nie istnieją) --- */
+// nie modyfikujemy oryginalnej inicjalizacji save — dodajemy pola jeśli brak
+if(!Array.isArray(save.ownedHats)) save.ownedHats = [];
+if(typeof save.eqHat === 'undefined' || save.eqHat === null) save.eqHat = null;
+
+/* --- funkcje kupna / założenia --- */
+/* Kup czapkę — sprawdza UP, zapisuje w save.ownedHats */
+window.buyHat = function(hatID){
+  // komentarz po polsku: walidacja istnienia czapki
+  if(!hats[hatID]) { alert("Nieznana czapka."); return; }
+
+  // jeśli już kupiona — informuj i nie przeliczaj kosztu
+  if(save.ownedHats.includes(hatID)){
+    alert("Masz już tę czapkę.");
+    return;
+  }
+
+  // sprawdź UP
+  if(save.up < hats[hatID].price){
+    // dźwięk odmowy
+    playBeep(220,0.08,'sine',0.08);
+    alert("Nie masz wystarczająco UP!");
+    return;
+  }
+
+  // odejmij UP i zapisz
+  save.up -= hats[hatID].price;
+  save.ownedHats.push(hatID);
+  playPurchase();
+  saveData();
+  updateUI();
+  renderShop(); // odśwież UI
+};
+
+/* Załóż / zdejmij czapkę (toggle) */
+window.equipHat = function(hatID){
+  if(!hats[hatID]) return;
+  if(!save.ownedHats.includes(hatID)){
+    alert("Najpierw kup tę czapkę.");
+    return;
+  }
+
+  if(save.eqHat === hatID){
+    // zdejmij
+    save.eqHat = null;
+  } else {
+    // załóż
+    save.eqHat = hatID;
+  }
+  playCoreEquip();
+  saveData();
+  updateUI();
+  renderShop();
+  updateHatOverlayImmediate();
+};
+
+/* --- dodanie sekcji czapek do sklepu (po istniejącym renderShop) --- */
+/* Zapisz oryginalną funkcję renderShop i przekaż jej wykonanie, a następnie dopisz sekcję HATS
+   Takie podejście NIE NADPISUJE oryginalnej logiki, tylko dokłada nową sekcję. */
+(function(){
+  const originalRenderShop = renderShop;
+  renderShop = function(){
+    // wywołaj oryginalny renderer
+    originalRenderShop();
+
+    // jeśli aktualna karta to shapes, dorzuć sekcję Hats pod istniejącą zawartością
+    if(currentTab === 'shapes'){
+      const shopList = document.getElementById('shopList');
+      if(!shopList) return;
+
+      // stwórz wrapper sekcji czapek
+      let hatsHTML = `<hr style="border:1px solid #222;margin:8px 0;"><p style="color:var(--accent)">HATS</p>`;
+      hatsHTML += `<div style="margin-bottom:12px">`;
+      Object.keys(hats).forEach(hid=>{
+        const hat = hats[hid];
+        const owned = save.ownedHats.includes(hid);
+        const equipped = save.eqHat === hid;
+        const btnBuy = owned ? `<button class="hat-btn" disabled>Kup</button>` : `<button class="hat-btn buy" onclick="buyHat('${hid}')">Kup (${hat.price.toLocaleString()} UP)</button>`;
+        const btnEquip = owned ? `<button class="hat-btn" onclick="equipHat('${hid}')">${equipped? 'Zdejmij' : 'Załóż'}</button>` : `<button class="hat-btn" disabled>Załóż</button>`;
+
+        hatsHTML += `<div class="hat-row item ${owned?'owned':''} ${equipped?'eq':''}">
+          <div style="display:flex;align-items:center">
+            <div class="hat-emoji">${hat.icon}</div>
+            <div style="text-align:left">
+              <div style="font-weight:800;color:${equipped?'#fff':'#bbb'}">${hat.name}</div>
+              <div class="price" style="font-size:0.72rem">${owned ? (equipped ? 'EQUIPPED' : 'OWNED') : (hat.price.toLocaleString() + ' UP')}</div>
+            </div>
+          </div>
+          <div>${btnBuy}${btnEquip}</div>
+        </div>`;
+      });
+      hatsHTML += `</div>`;
+
+      // dopisz na końcu obecnej listy sklepu
+      shopList.insertAdjacentHTML('beforeend', hatsHTML);
+    }
+  };
+})();
+
+/* --- wizualizacja czapki nad graczem (DOM overlay) --- */
+/* Używamy osobnej warstwy DOM (#hatOverlay) nad canvas, którą przesuwamy zgodnie z pozycją gracza.
+   Dzięki temu NIE ingerujemy w główny loop rysujący canvas. */
+
+/* funkcja aktualizująca pozycję i zawartość nakładki czapki */
+function updateHatOverlayImmediate(){
+  const overlay = document.getElementById('hatOverlay');
+  const emojiEl = document.getElementById('hatEmoji');
+  const nameEl = document.getElementById('hatName');
+
+  if(!overlay || !emojiEl || !nameEl) return;
+
+  // brak założonej czapki -> ukryj nakładkę
+  if(!save.eqHat){
+    overlay.style.display = 'none';
+    return;
+  }
+
+  const hatData = hats[save.eqHat];
+  if(!hatData){ overlay.style.display = 'none'; return; }
+
+  // ustawik treść
+  emojiEl.innerText = hatData.icon;
+  nameEl.innerText = hatData.name;
+
+  overlay.style.display = 'block';
+
+  // oblicz pozycję nad graczem (skalowanie do bounding rect canvas)
+  const rect = canvas.getBoundingClientRect();
+  const px = rect.left + (p.x / 900) * rect.width;
+  const py = rect.top + (p.y / 600) * rect.height;
+
+  // ustaw pozycję elementu (centrowanie)
+  overlay.style.left = `${px}px`;
+  // umieść trochę nad graczem
+  overlay.style.top = `${py - (rect.height * 0.06)}px`;
+}
+
+/* pętla aktualizująca overlay płynnie (nie modyfikujemy main loop) */
+(function hatOverlayLoop(){
+  updateHatOverlayImmediate();
+  requestAnimationFrame(hatOverlayLoop);
+})();
+
+/* --- Jeżeli użytkownik od razu ma założoną czapkę w save (z poprzedniego zapisu), pokaż overlay --- */
+updateHatOverlayImmediate();
+
+/* ===========================
+   KONIEC DODATKOWEGO KODU CZAPEK
+   =========================== */
+
+/* Po dodaniu wszystkich funkcji — inicjalizacja UI (istniejące wywołania) */
 updateUI();
 switchTab('skins'); // initialize shop tab + render
 renderShop();
+
+/* ===========================
+   DODATKOWY KOD: RESET WSZYSTKIEGO (UI + LOGIKA)
+   - dodaje przycisk w lewym dolnym rogu
+   - otwiera modal z ostrzeżeniami
+   - wymaga wpisania "RESET" by aktywować przycisk potwierdzenia
+   - resetuje zakupy i zapisuje
+   =========================== */
+
+(function initResetUI(){
+  const resetBtn = document.getElementById('resetBtn');
+  const resetModal = document.getElementById('resetModal');
+  const cancelBtn = document.getElementById('cancelResetBtn');
+  const confirmBtn = document.getElementById('confirmResetBtn');
+  const input = document.getElementById('resetConfirmInput');
+
+  // pokaż modal po kliknięciu przycisku RESET
+  resetBtn.addEventListener('click', ()=> {
+    if(!resetModal) return;
+    input.value = '';
+    confirmBtn.disabled = true;
+    resetModal.style.display = 'flex';
+    resetModal.setAttribute('aria-hidden','false');
+    input.focus();
+  });
+
+  // anuluj
+  cancelBtn.addEventListener('click', ()=> {
+    resetModal.style.display = 'none';
+    resetModal.setAttribute('aria-hidden','true');
+  });
+
+  // odblokuj potwierdzenie tylko gdy wpisano RESET
+  input.addEventListener('input', ()=> {
+    confirmBtn.disabled = (input.value.trim().toUpperCase() !== 'RESET');
+  });
+
+  // potwierdź reset
+  confirmBtn.addEventListener('click', ()=> {
+    // bezpieczeństwo: dodatkowe sprawdzenie
+    if(input.value.trim().toUpperCase() !== 'RESET') return;
+    performFullReset();
+    // zamknij modal i pokaż komunikat
+    resetModal.style.display = 'none';
+    resetModal.setAttribute('aria-hidden','true');
+    showFlexToast("Reset wykonany — zakupy zostały usunięte");
+  });
+})();
+
+/* funkcja wykonująca faktyczny reset zakupów */
+function performFullReset(){
+  // Komentarz (PL): resetujemy jedynie zakupy i powiązane wyposażenia oraz UP.
+  // Nie usuwamy rekordu 'best' ani tabel leaderboard (zostawione celowo).
+  save.owned = ['cyan'];      // pozostawiamy darmowy/wyjściowy skin
+  save.eqSkin = 'cyan';
+  save.ownedShapes = [];
+  save.eqShape = null;
+  save.shapeColor = '#ffffff';
+  save.ownedHats = [];
+  save.eqHat = null;
+  save.eqDrone = null;
+  save.eqPerks = [];
+  save.eqCores = [];
+  save.up = 5000; // przywróć domyślne UP
+
+  // zapisz i odśwież UI
+  saveData();
+  updateUI();
+  renderShop();
+  updateHatOverlayImmediate();
+  playBeep(220,0.06,'sine',0.14);
+}
+
+/* ===========================
+   KONIEC KODU RESET
+   =========================== */
 
 </script>
 </body>
